@@ -1,0 +1,97 @@
+{
+  "name": "cogxai",
+  "version": "0.1.0",
+  "description": "CogxAI — Persistent memory SDK for AI agents. Store, recall, dream, and reflect. Stanford Generative Agents architecture on Supabase + pgvector.",
+  "main": "dist/sdk/index.js",
+  "types": "dist/sdk/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/sdk/index.js",
+      "types": "./dist/sdk/index.d.ts"
+    },
+    "./schema": "./supabase-schema.sql",
+    "./local": {
+      "require": "./dist/mcp/local-store.js",
+      "types": "./dist/mcp/local-store.d.ts"
+    },
+    "./mcp": {
+      "require": "./dist/mcp/server.js",
+      "types": "./dist/mcp/server.d.ts"
+    }
+  },
+  "bin": {
+    "cogxai": "dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "supabase-schema.sql",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "build:sdk": "tsc -p tsconfig.sdk.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build:sdk",
+    "mcp": "MCP_MODE=1 tsx src/mcp/server.ts",
+    "dashboard": "cd dashboard && npm run dev",
+    "dashboard:build": "cd dashboard && npm run build"
+  },
+  "keywords": [
+    "cogxai",
+    "ai-agent",
+    "ai-memory",
+    "memory",
+    "cognitive-architecture",
+    "generative-agents",
+    "mcp",
+    "base",
+    "evm",
+    "ethereum",
+    "supabase",
+    "pgvector",
+    "anthropic",
+    "claude",
+    "embeddings",
+    "dream-cycle",
+    "cortex",
+    "sdk"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Black-dork/cogxai.git"
+  },
+  "homepage": "https://cogxai.org",
+  "bugs": {
+    "url": "https://github.com/Black-dork/cogxai/issues"
+  },
+  "author": "Black-dork",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@supabase/supabase-js": "^2.95.3",
+    "ethers": "^6.13.0",
+    "dotenv": "^16.4.0",
+    "jose": "^6.1.3",
+    "pino": "^9.0.0",
+    "tweetnacl": "^1.0.3",
+    "twitter-api-v2": "^1.29.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.25",
+    "@types/node": "^22.19.11",
+    "@types/node-cron": "^3.0.11",
+    "express": "^4.21.0",
+    "express-rate-limit": "^8.2.1",
+    "node-cron": "^3.0.3",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
