@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Provenance — CogxAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
+    scrollbar-width: thin;
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+      --bg: #0a0a0f;
+      --bg-warm: #0d0d14;
+      --surface: rgba(255, 255, 255, 0.02);
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --text-faint: #6b7280;
+      --accent: #00d4ff;
+      --accent-purple: #6366f1;
+      --border: rgba(255, 255, 255, 0.06);
+      --green: #10b981;
+      --orange: #f97316;
+      --red: #ef4444;
+      --purple: #a78bfa;
+      --mono: 'JetBrains Mono', monospace;
+
+      --root-color: #00d4ff;
+      --ancestor-color: #6366f1;
+      --descendant-color: #10b981;
+      --related-color: #a78bfa;
+    }
+
+    body {
+      font-family: var(--mono);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.7;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    ::selection { background: var(--accent); color: var(--bg); }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -350px;
+      left: -350px;
+      width: 900px;
+      height: 900px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, rgba(99, 102, 241, 0.02) 35%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -500px;
+      right: -500px;
+      width: 1400px;
+      height: 1400px;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.03) 0%, rgba(0, 212, 255, 0.01) 30%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      width: calc(100% - 160px); max-width: 1200px;
+      z-index: 100;
+      background: rgba(10, 10, 15, 0.45);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: none;
+      border-radius: 16px;
+    }
+    .nav-inner {
+      padding: 0 36px;
+      height: 48px; display: flex; align-items: center;
+    }
+    .nav-logo {
+      font-size: 18px; font-weight: 800; letter-spacing: 2px;
+      color: var(--text); text-decoration: none;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-links {
+      display: flex; align-items: center; gap: 28px; margin-left: auto;
+    }
+    .nav-links a {
+      color: var(--text-muted); font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; text-decoration: none; transition: color 0.3s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+
+    /* ── Mobile Nav ── */
+    .nav-toggle {
+      display: none; background: none;
+      border: none;
+      cursor: pointer; padding: 8px 7px; margin-left: auto;
+    }
+    .nav-toggle span {
+      display: block; width: 16px; height: 1.5px;
+      background: var(--text-muted); transition: all 0.3s;
+    }
+    .nav-toggle span + span { margin-top: 4px; }
+    .nav-toggle.open span:nth-child(1) { transform: rotate(45deg) translate(3.5px, 3.5px); }
+    .nav-toggle.open span:nth-child(2) { opacity: 0; }
+    .nav-toggle.open span:nth-child(3) { transform: rotate(-45deg) translate(3.5px, -3.5px); }
+
+    @media (max-width: 768px) {
+      nav { width: calc(100% - 24px); }
+      .nav-toggle { display: flex; flex-direction: column; }
+      .nav-links {
+        display: none; position: absolute; top: 52px; left: 0; right: 0;
+        background: rgba(10, 10, 15, 0.95);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        flex-direction: column; padding: 1.2rem 2rem; gap: 1.2rem;
+      }
+      .nav-links.open { display: flex; }
+      .nav-inner { padding: 0 20px; }
+    }
+
+    /* ── Container ── */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 80px 2rem 2rem;
+    }
+
+    /* ── Page Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+      opacity: 0;
+    }
+
+    header h1 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--text);
+    }
+
+    header h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .back-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.8rem;
+      transition: color 0.3s;
+    }
+
+    .back-link:hover {
+      color: var(--accent);
+    }
+
+    /* ── Search ── */
+    .search-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      opacity: 0;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 0.85rem 1.25rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .search-bar input::placeholder { color: var(--text-faint); }
+
+    .search-bar input:focus {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.06);
+    }
+
+    .search-bar button {
+      padding: 0.85rem 2rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(0, 212, 255, 0.08);
+      color: var(--accent);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .search-bar button::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.08), transparent);
+      transition: left 0.5s;
+    }
+
+    .search-bar button:hover::before { left: 100%; }
+
+    .search-bar button:hover {
+      background: rgba(0, 212, 255, 0.14);
+      transform: translateY(-1px);
+    }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+      display: flex;
+      gap: 1.5rem;
+      padding: 1rem 1.5rem;
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 2rem;
+      font-size: 0.78rem;
+      flex-wrap: wrap;
+      opacity: 0;
+    }
+
+    .stat { display: flex; align-items: center; gap: 0.4rem; }
+    .stat .label { color: var(--text-muted); }
+    .stat .value {
+      font-weight: 600;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat .value[data-animate] {
+      display: inline-block;
+    }
+
+    /* ── Layout ── */
+    .trace-layout {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 960px) {
+      .trace-layout { grid-template-columns: 1fr; }
+    }
+
+    /* ── Graph Panel ── */
+    .graph-panel {
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      min-height: 520px;
+    }
+
+    .graph-panel canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .graph-legend {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      display: flex;
+      gap: 1rem;
+      font-size: 0.68rem;
+      background: rgba(10, 10, 15, 0.8);
+      backdrop-filter: blur(8px);
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text-muted);
+    }
+
+    .legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    /* ── Detail Panel ── */
+    .detail-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-height: 800px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+      scrollbar-color: var(--border) transparent;
+      padding-right: 4px;
+    }
+
+    .detail-panel::-webkit-scrollbar { width: 4px; }
+    .detail-panel::-webkit-scrollbar-track { background: transparent; }
+    .detail-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ── Memory Cards ── */
+    .memory-card {
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.1rem 1.25rem;
+      cursor: pointer;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0;
+      transform: translateX(20px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .memory-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .memory-card:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+      transform: translateX(0) scale(1.01);
+    }
+
+    .memory-card:hover::before { opacity: 1; }
+
+    .memory-card.active {
+      border-color: rgba(0, 212, 255, 0.3);
+      background: rgba(0, 212, 255, 0.03);
+    }
+
+    .memory-card.active::before { opacity: 1; }
+
+    .memory-card .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .memory-card .card-type {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 10px;
+      border-radius: 5px;
+    }
+
+    .type-root {
+      background: rgba(0, 212, 255, 0.08);
+      color: var(--accent);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    .type-ancestor {
+      background: rgba(99, 102, 241, 0.08);
+      color: var(--accent-purple);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .type-descendant {
+      background: rgba(16, 185, 129, 0.08);
+      color: var(--green);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .type-related {
+      background: rgba(167, 139, 250, 0.08);
+      color: var(--purple);
+      border: 1px solid rgba(167, 139, 250, 0.2);
+    }
+
+    .memory-card.type-root-card::before { background: linear-gradient(180deg, var(--accent), transparent); }
+    .memory-card.type-ancestor-card::before { background: linear-gradient(180deg, var(--accent-purple), transparent); }
+    .memory-card.type-descendant-card::before { background: linear-gradient(180deg, var(--green), transparent); }
+    .memory-card.type-related-card::before { background: linear-gradient(180deg, var(--purple), transparent); }
+
+    .memory-card .card-date {
+      font-size: 0.68rem;
+      color: var(--text-faint);
+    }
+
+    .memory-card .card-summary {
+      font-size: 0.78rem;
+      line-height: 1.55;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .memory-card .card-meta {
+      display: flex;
+      gap: 0.75rem;
+      font-size: 0.68rem;
+      color: var(--text-faint);
+    }
+
+    .card-relation {
+      font-size: 0.68rem;
+      color: var(--accent-purple);
+      margin-bottom: 0.5rem;
+      opacity: 0.8;
+    }
+
+    /* ── Section Headers ── */
+    .section-header {
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin: 0.75rem 0 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0;
+    }
+
+    .section-count {
+      font-size: 0.65rem;
+      font-weight: 400;
+      color: var(--text-faint);
+    }
+
+    /* ── Explain Section ── */
+    .explain-section {
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-top: 1rem;
+      opacity: 0;
+    }
+
+    .explain-section h3 {
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, var(--text), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .explain-input {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .explain-input input {
+      flex: 1;
+      padding: 0.65rem 0.9rem;
+      font-family: inherit;
+      font-size: 0.78rem;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(10, 10, 15, 0.6);
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .explain-input input::placeholder { color: var(--text-faint); }
+    .explain-input input:focus {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.05);
+    }
+
+    .explain-input button {
+      padding: 0.65rem 1.2rem;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: rgba(0, 212, 255, 0.08);
+      color: var(--accent);
+      border: 1px solid rgba(0, 212, 255, 0.25);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .explain-input button:hover {
+      background: rgba(0, 212, 255, 0.14);
+    }
+
+    .explain-result {
+      font-size: 0.78rem;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      color: var(--text);
+    }
+
+    .explain-chain {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .chain-step {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.72rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .chain-step .step-date {
+      color: var(--accent);
+      white-space: nowrap;
+      min-width: 85px;
+      font-weight: 500;
+    }
+
+    .chain-step span:last-child { color: var(--text-muted); }
+
+    /* ── Loading ── */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      height: 260px;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+    }
+
+    .loading-ring {
+      width: 48px; height: 48px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-right-color: var(--accent-purple);
+      border-radius: 50%;
+      animation: spin 1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      animation: pulse-text 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-text {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    /* ── Empty State ── */
+    .empty-state {
+      text-align: center;
+      padding: 5rem 2rem;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+
+    .empty-state .empty-icon {
+      width: 80px; height: 80px;
+      margin: 0 auto 2rem;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: var(--text-faint);
+      animation: empty-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes empty-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); border-color: var(--border); }
+      50% { box-shadow: 0 0 30px 5px rgba(0, 212, 255, 0.04); border-color: rgba(0, 212, 255, 0.2); }
+    }
+
+    .empty-state p { margin-bottom: 0.6rem; }
+    .empty-state code {
+      background: var(--surface);
+      color: var(--accent);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      border: 1px solid var(--border);
+    }
+
+    .empty-state a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: opacity 0.3s;
+    }
+
+    .empty-state a:hover { opacity: 0.7; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">CogxAI</a>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="nav-links">
+        <a href="/install.html">For Agents</a>
+        <a href="/docs.html">Docs</a>
+        <a href="/brain.html">Brain</a>
+        <a href="/explore">Explorer</a>
+        <a href="/setup">Get Started</a>
+      <a href="https://github.com/Black-dork/cogxai" target="_blank">GitHub</a>
+      <a href="https://x.com/" target="_blank">X</a>
+        <a href="/register" style="background: rgba(0,212,255,0.08); color: #00d4ff; padding: 6px 14px; border-radius: 10px; font-weight: 700; font-size: 11px; line-height: 1.7; letter-spacing: 1.5px; border: 1px solid rgba(0,212,255,0.3);">Register</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <header id="header">
+      <a href="/" class="back-link">&larr; cogxai.org</a>
+      <h1>Memory <span>Provenance</span></h1>
+    </header>
+
+    <div class="search-bar" id="search-bar">
+      <input type="text" id="search-input" placeholder="Enter memory ID to trace its provenance..." />
+      <button onclick="doSearch()">Trace</button>
+    </div>
+
+    <div id="stats-bar" class="stats-bar" style="display:none"></div>
+
+    <div id="content">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">&#x2b21;</div>
+        <p>Provide a memory ID to trace its lineage.</p>
+        <p>View every memory that preceded it, what it generated, and the reasoning behind it.</p>
+        <p style="margin-top:1.2rem; font-size:0.72rem; color:var(--text-faint)">
+          Try: <code>12067</code> or any memory ID from the <a href="/explore">Explorer</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Nav Toggle ────────────────────────────────────────────────────
+    document.getElementById('navToggle').addEventListener('click', function() {
+      this.classList.toggle('open');
+      document.querySelector('.nav-links').classList.toggle('open');
+    });
+
+    // ── Entrance Animations ──────────────────────────────────────────
+    anime({
+      targets: '#header',
+      opacity: [0, 1],
+      translateY: [-20, 0],
+      duration: 800,
+      easing: 'easeOutExpo',
+      delay: 200,
+    });
+
+    anime({
+      targets: '#search-bar',
+      opacity: [0, 1],
+      translateY: [-15, 0],
+      duration: 800,
+      easing: 'easeOutExpo',
+      delay: 400,
+    });
+
+    anime({
+      targets: '#empty-state',
+      opacity: [0, 1],
+      scale: [0.95, 1],
+      duration: 1000,
+      easing: 'easeOutExpo',
+      delay: 600,
+    });
+
+    // ── App State ────────────────────────────────────────────────────
+    const API_BASE = window.location.origin;
+    let currentTrace = null;
+    let selectedNode = null;
+
+    async function doSearch() {
+      const input = document.getElementById('search-input').value.trim();
+      if (!input) return;
+
+      const memoryId = parseInt(input);
+      if (isNaN(memoryId)) {
+        alert('Enter a numeric memory ID for now');
+        return;
+      }
+
+      document.getElementById('content').innerHTML = `
+        <div class="loading">
+          <div class="loading-ring"></div>
+          <span class="loading-text">Tracing memory provenance...</span>
+        </div>`;
+      document.getElementById('stats-bar').style.display = 'none';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/memory/${memoryId}/trace`);
+        if (!res.ok) throw new Error(await res.text());
+        currentTrace = await res.json();
+        renderTrace(currentTrace);
+      } catch (err) {
+        document.getElementById('content').innerHTML =
+          `<div class="empty-state"><div class="empty-icon" style="border-color:var(--red);color:var(--red)">!</div><p style="color:var(--red)">${escapeHtml(err.message)}</p></div>`;
+      }
+    }
+
+    function renderTrace(trace) {
+      // Stats bar with animated counters
+      const statsBar = document.getElementById('stats-bar');
+      statsBar.style.display = 'flex';
+      statsBar.style.opacity = '0';
+      statsBar.innerHTML = `
+        <div class="stat"><span class="label">Nodes</span><span class="value" data-animate data-target="${trace.stats.total_nodes}">0</span></div>
+        <div class="stat"><span class="label">Ancestors</span><span class="value" data-animate data-target="${trace.ancestors.length}">0</span></div>
+        <div class="stat"><span class="label">Descendants</span><span class="value" data-animate data-target="${trace.descendants.length}">0</span></div>
+        <div class="stat"><span class="label">Related</span><span class="value" data-animate data-target="${trace.related.length}">0</span></div>
+        <div class="stat"><span class="label">Depth</span><span class="value" data-animate data-target="${trace.stats.max_depth}">0</span></div>
+        <div class="stat"><span class="label">Span</span><span class="value">${trace.stats.time_span_days}d</span></div>
+        ${trace.entities.length ? `<div class="stat"><span class="label">Entities</span><span class="value" style="color:var(--purple)">${trace.entities.map(e => escapeHtml(e.name)).join(', ')}</span></div>` : ''}
+      `;
+
+      // Animate stats bar in
+      anime({
+        targets: statsBar,
+        opacity: [0, 1],
+        translateY: [-10, 0],
+        duration: 600,
+        easing: 'easeOutExpo',
+      });
+
+      // Animate counter values
+      document.querySelectorAll('.value[data-animate]').forEach(el => {
+        const target = parseInt(el.dataset.target);
+        anime({
+          targets: el,
+          innerHTML: [0, target],
+          round: 1,
+          duration: 1200,
+          delay: 300,
+          easing: 'easeOutExpo',
+        });
+      });
+
+      // Main layout
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="trace-layout">
+          <div>
+            <div class="graph-panel" id="graph-panel">
+              <canvas id="graph-canvas"></canvas>
+              <div class="graph-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--root-color)"></div>Root</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--ancestor-color)"></div>Ancestor</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--descendant-color)"></div>Descendant</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--related-color)"></div>Related</div>
+              </div>
+            </div>
+            <div class="explain-section" id="explain-section">
+              <h3>Ask about this memory</h3>
+              <div class="explain-input">
+                <input type="text" id="explain-input" placeholder="Why did you form this memory? What led to this?" />
+                <button onclick="doExplain()">Ask</button>
+              </div>
+              <div id="explain-result"></div>
+            </div>
+          </div>
+          <div class="detail-panel" id="detail-panel"></div>
+        </div>
+      `;
+
+      renderGraph(trace);
+      renderDetailPanel(trace);
+
+      // Animate explain section
+      anime({
+        targets: '#explain-section',
+        opacity: [0, 1],
+        translateY: [20, 0],
+        duration: 800,
+        easing: 'easeOutExpo',
+        delay: 600,
+      });
+    }
+
+    function renderDetailPanel(trace) {
+      const panel = document.getElementById('detail-panel');
+      let html = '';
+
+      html += renderCard(trace.root, 'root');
+
+      if (trace.ancestors.length > 0) {
+        html += `<div class="section-header">Ancestors <span class="section-count">(${trace.ancestors.length})</span></div>`;
+        for (const a of trace.ancestors) html += renderCard(a, 'ancestor');
+      }
+
+      if (trace.descendants.length > 0) {
+        html += `<div class="section-header">Descendants <span class="section-count">(${trace.descendants.length})</span></div>`;
+        for (const d of trace.descendants) html += renderCard(d, 'descendant');
+      }
+
+      if (trace.related.length > 0) {
+        html += `<div class="section-header">Related <span class="section-count">(${trace.related.length})</span></div>`;
+        for (const r of trace.related) html += renderCard(r, 'related');
+      }
+
+      panel.innerHTML = html;
+
+      // Staggered card entrance animation
+      anime({
+        targets: '.section-header',
+        opacity: [0, 1],
+        translateX: [-10, 0],
+        duration: 500,
+        delay: anime.stagger(60, { start: 200 }),
+        easing: 'easeOutExpo',
+      });
+
+      anime({
+        targets: '.memory-card',
+        opacity: [0, 1],
+        translateX: [30, 0],
+        duration: 700,
+        delay: anime.stagger(80, { start: 100 }),
+        easing: 'easeOutExpo',
+      });
+    }
+
+    function renderCard(node, category) {
+      const date = new Date(node.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const time = new Date(node.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      return `
+        <div class="memory-card type-${category}-card" onclick="selectNode(${node.id})" data-id="${node.id}">
+          <div class="card-header">
+            <span class="card-type type-${category}">${category} &middot; ${escapeHtml(node.memory_type)}</span>
+            <span class="card-date">${date} ${time}</span>
+          </div>
+          ${node.relation !== 'root' ? `<div class="card-relation">&xrarr; ${escapeHtml(node.relation)} (strength: ${node.strength.toFixed(2)})</div>` : ''}
+          <div class="card-summary">${escapeHtml(node.summary.slice(0, 200))}</div>
+          <div class="card-meta">
+            <span>importance: ${node.importance.toFixed(2)}</span>
+            <span>decay: ${node.decay_factor.toFixed(2)}</span>
+            <span>accessed: ${node.access_count}x</span>
+            <span>depth: ${node.depth}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function selectNode(id) {
+      document.querySelectorAll('.memory-card').forEach(c => c.classList.remove('active'));
+      const card = document.querySelector(`[data-id="${id}"]`);
+      if (card) {
+        card.classList.add('active');
+        // Subtle pulse animation on select
+        anime({
+          targets: card,
+          scale: [1, 1.02, 1],
+          duration: 400,
+          easing: 'easeInOutQuad',
+        });
+      }
+      selectedNode = id;
+    }
+
+    async function doExplain() {
+      const question = document.getElementById('explain-input').value.trim();
+      if (!question || !currentTrace) return;
+
+      const resultDiv = document.getElementById('explain-result');
+      resultDiv.innerHTML = `<div class="loading" style="height:120px"><div class="loading-ring" style="width:32px;height:32px"></div><span class="loading-text">Analyzing memory provenance...</span></div>`;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/memory/${currentTrace.root.id}/explain`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const result = await res.json();
+
+        let html = `<div class="explain-result">${escapeHtml(result.explanation)}</div>`;
+
+        if (result.reasoning_chain && result.reasoning_chain.length > 0) {
+          html += `<div class="explain-chain"><div class="section-header" style="opacity:1">Reasoning Chain</div>`;
+          for (const step of result.reasoning_chain) {
+            const [date, ...rest] = step.split(': ');
+            html += `<div class="chain-step"><span class="step-date">${escapeHtml(date)}</span><span>${escapeHtml(rest.join(': '))}</span></div>`;
+          }
+          html += '</div>';
+        }
+
+        resultDiv.innerHTML = html;
+
+        // Animate explanation in
+        anime({
+          targets: resultDiv.children,
+          opacity: [0, 1],
+          translateY: [10, 0],
+          duration: 600,
+          delay: anime.stagger(100),
+          easing: 'easeOutExpo',
+        });
+      } catch (err) {
+        resultDiv.innerHTML = `<p style="color:var(--red)">Error: ${escapeHtml(err.message)}</p>`;
+      }
+    }
+
+    // ── Graph Rendering (force-directed) ─────────────────────────────
+
+    function renderGraph(trace) {
+      const canvas = document.getElementById('graph-canvas');
+      const panel = document.getElementById('graph-panel');
+      const rect = panel.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 2;
+      canvas.width = rect.width * dpr;
+      canvas.height = 520 * dpr;
+      canvas.style.height = '520px';
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      const W = rect.width;
+      const H = 520;
+
+      // Build nodes
+      const allNodes = [trace.root, ...trace.ancestors, ...trace.descendants, ...trace.related];
+      const nodeMap = new Map();
+      const colors = {
+        root: '#00d4ff',
+        ancestor: '#6366f1',
+        descendant: '#10b981',
+        related: '#a78bfa',
+      };
+
+      const nodes = allNodes.map((n) => {
+        const category = n.depth === 0 ? 'root' :
+          trace.ancestors.includes(n) ? 'ancestor' :
+          trace.descendants.includes(n) ? 'descendant' : 'related';
+        const obj = {
+          id: n.id,
+          x: W / 2 + (Math.random() - 0.5) * W * 0.5,
+          y: H / 2 + (Math.random() - 0.5) * H * 0.5,
+          vx: 0, vy: 0,
+          r: n.depth === 0 ? 16 : Math.max(5, 12 - n.depth * 2),
+          color: colors[category],
+          label: n.summary.slice(0, 28),
+          importance: n.importance,
+          category,
+          data: n,
+          pulsePhase: Math.random() * Math.PI * 2,
+        };
+        nodeMap.set(n.id, obj);
+        return obj;
+      });
+
+      // Build edges
+      const edges = trace.links.map(l => ({
+        source: nodeMap.get(l.source_id),
+        target: nodeMap.get(l.target_id),
+        strength: l.strength,
+        type: l.link_type,
+        flowOffset: Math.random() * 100,
+      })).filter(e => e.source && e.target);
+
+      // Auto-link ancestors/descendants to root if no explicit link
+      for (const n of [...trace.ancestors, ...trace.descendants]) {
+        const hasLink = edges.some(e =>
+          (e.source.id === n.id && e.target.id === trace.root.id) ||
+          (e.target.id === n.id && e.source.id === trace.root.id)
+        );
+        if (!hasLink && nodeMap.has(n.id)) {
+          edges.push({
+            source: nodeMap.get(n.id),
+            target: nodeMap.get(trace.root.id),
+            strength: n.strength,
+            type: n.relation,
+            flowOffset: Math.random() * 100,
+          });
+        }
+      }
+
+      let frame = 0;
+      let hoveredNode = null;
+      let mouseX = -1, mouseY = -1;
+
+      // Force simulation tick
+      function tick() {
+        const damping = frame < 80 ? 0.88 : 0.92;
+
+        // Repulsion
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            let dx = nodes[j].x - nodes[i].x;
+            let dy = nodes[j].y - nodes[i].y;
+            let d = Math.sqrt(dx * dx + dy * dy) || 1;
+            let force = 1000 / (d * d);
+            let fx = dx / d * force;
+            let fy = dy / d * force;
+            nodes[i].vx -= fx;
+            nodes[i].vy -= fy;
+            nodes[j].vx += fx;
+            nodes[j].vy += fy;
+          }
+        }
+
+        // Attraction along edges
+        for (const e of edges) {
+          let dx = e.target.x - e.source.x;
+          let dy = e.target.y - e.source.y;
+          let d = Math.sqrt(dx * dx + dy * dy) || 1;
+          let force = (d - 110) * 0.012 * e.strength;
+          let fx = dx / d * force;
+          let fy = dy / d * force;
+          e.source.vx += fx;
+          e.source.vy += fy;
+          e.target.vx -= fx;
+          e.target.vy -= fy;
+        }
+
+        // Center gravity + boundary
+        for (const n of nodes) {
+          n.vx += (W / 2 - n.x) * 0.003;
+          n.vy += (H / 2 - n.y) * 0.003;
+          n.vx *= damping;
+          n.vy *= damping;
+          n.x += n.vx;
+          n.y += n.vy;
+          n.x = Math.max(n.r + 10, Math.min(W - n.r - 10, n.x));
+          n.y = Math.max(n.r + 10, Math.min(H - n.r - 10, n.y));
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        const time = frame * 0.02;
+
+        // ── Draw edges with flow particles ──
+        for (const e of edges) {
+          const sx = e.source.x, sy = e.source.y;
+          const tx = e.target.x, ty = e.target.y;
+          const alpha = 0.08 + e.strength * 0.15;
+
+          // Edge glow
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(tx, ty);
+          ctx.strokeStyle = `rgba(99, 102, 241, ${alpha * 0.5})`;
+          ctx.lineWidth = 2 + e.strength * 2;
+          ctx.filter = 'blur(3px)';
+          ctx.stroke();
+          ctx.restore();
+
+          // Edge line
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(tx, ty);
+          ctx.strokeStyle = `rgba(99, 102, 241, ${alpha})`;
+          ctx.lineWidth = 0.6 + e.strength * 0.8;
+          ctx.stroke();
+
+          // Flow particle along edge
+          const flowT = ((time * 0.8 + e.flowOffset) % 3) / 3;
+          const px = sx + (tx - sx) * flowT;
+          const py = sy + (ty - sy) * flowT;
+          const particleAlpha = Math.sin(flowT * Math.PI) * 0.6;
+          ctx.beginPath();
+          ctx.arc(px, py, 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(0, 212, 255, ${particleAlpha})`;
+          ctx.fill();
+        }
+
+        // ── Draw nodes ──
+        for (const n of nodes) {
+          const pulse = Math.sin(time * 1.5 + n.pulsePhase) * 0.15 + 0.85;
+          const isHovered = hoveredNode === n;
+          const isSelected = selectedNode === n.id;
+          const nodeR = n.r * (isHovered ? 1.3 : 1);
+
+          // Outer glow
+          const glowRadius = nodeR * (n.category === 'root' ? 3.5 : 2.5) * pulse;
+          const gradient = ctx.createRadialGradient(n.x, n.y, nodeR * 0.5, n.x, n.y, glowRadius);
+          const c = hexToRgb(n.color);
+          gradient.addColorStop(0, `rgba(${c}, ${(isSelected ? 0.25 : 0.12) * pulse})`);
+          gradient.addColorStop(1, `rgba(${c}, 0)`);
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, glowRadius, 0, Math.PI * 2);
+          ctx.fillStyle = gradient;
+          ctx.fill();
+
+          // Node body
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, nodeR, 0, Math.PI * 2);
+          const fillAlpha = 0.25 + n.importance * 0.5;
+          ctx.fillStyle = `rgba(${c}, ${fillAlpha})`;
+          ctx.fill();
+
+          // Node border
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, nodeR, 0, Math.PI * 2);
+          ctx.strokeStyle = n.color;
+          ctx.lineWidth = n.category === 'root' ? 2.5 : (isSelected ? 2 : 1.2);
+          ctx.globalAlpha = isHovered || isSelected ? 1 : 0.7 + n.importance * 0.3;
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+
+          // Inner bright core
+          if (n.category === 'root') {
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, nodeR * 0.3, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${c}, ${0.6 * pulse})`;
+            ctx.fill();
+          }
+
+          // Label
+          if (nodeR >= 7 || isHovered) {
+            ctx.font = `${isHovered ? '11' : n.category === 'root' ? '10' : '8'}px JetBrains Mono`;
+            ctx.fillStyle = `rgba(229, 231, 235, ${isHovered ? 0.95 : 0.6})`;
+            ctx.textAlign = 'center';
+            const labelY = n.y + nodeR + (isHovered ? 16 : 14);
+            ctx.fillText(isHovered ? n.label : n.label.slice(0, 20), n.x, labelY);
+          }
+
+          // Selection ring
+          if (isSelected) {
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, nodeR + 4, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(${c}, 0.3)`;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
+      }
+
+      // Animation loop
+      function animate() {
+        tick();
+        draw();
+        frame++;
+        requestAnimationFrame(animate);
+      }
+
+      // Animate graph panel entrance
+      anime({
+        targets: '.graph-panel',
+        opacity: [0, 1],
+        scale: [0.97, 1],
+        duration: 800,
+        easing: 'easeOutExpo',
+        delay: 100,
+      });
+
+      animate();
+
+      // ── Mouse interaction ──
+      canvas.addEventListener('mousemove', (e) => {
+        const r = canvas.getBoundingClientRect();
+        mouseX = e.clientX - r.left;
+        mouseY = e.clientY - r.top;
+        hoveredNode = null;
+        for (const n of nodes) {
+          const dx = n.x - mouseX;
+          const dy = n.y - mouseY;
+          if (dx * dx + dy * dy < (n.r + 8) * (n.r + 8)) {
+            hoveredNode = n;
+            break;
+          }
+        }
+        canvas.style.cursor = hoveredNode ? 'pointer' : 'default';
+      });
+
+      canvas.addEventListener('mouseleave', () => {
+        hoveredNode = null;
+        canvas.style.cursor = 'default';
+      });
+
+      canvas.addEventListener('click', (e) => {
+        const r = canvas.getBoundingClientRect();
+        const x = e.clientX - r.left;
+        const y = e.clientY - r.top;
+        for (const n of nodes) {
+          const dx = n.x - x;
+          const dy = n.y - y;
+          if (dx * dx + dy * dy < (n.r + 6) * (n.r + 6)) {
+            selectNode(n.id);
+            const card = document.querySelector(`[data-id="${n.id}"]`);
+            if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            break;
+          }
+        }
+      });
+    }
+
+    // ── Utility ──────────────────────────────────────────────────────
+
+    function hexToRgb(hex) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `${r},${g},${b}`;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // URL param support
+    const urlParams = new URLSearchParams(window.location.search);
+    const memId = urlParams.get('id');
+    if (memId) {
+      document.getElementById('search-input').value = memId;
+      doSearch();
+    }
+
+    // Enter key
+    document.getElementById('search-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doSearch();
+    });
+    document.getElementById('content').addEventListener('keydown', (e) => {
+      if (e.target.id === 'explain-input' && e.key === 'Enter') doExplain();
+    });
+  </script>
+</body>
+</html>
