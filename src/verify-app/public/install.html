@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CogxAI — Persistent Memory for AI Agents</title>
+  <meta name="description" content="Add lasting memory to your AI agent in under a minute. Compatible with Claude Desktop, Cursor, OpenClaw, DeerFlow, and any MCP runtime. Runs locally, works offline, costs nothing.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
+    scrollbar-width: thin;
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+      --bg: #0a0a0f;
+      --bg-warm: #0d0d14;
+      --bg-card: #111118;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --text-faint: #6b7280;
+      --accent: #00d4ff;
+      --accent-purple: #6366f1;
+      --accent-glow: rgba(0, 212, 255, 0.15);
+      --border: rgba(255, 255, 255, 0.06);
+      --border-strong: rgba(255, 255, 255, 0.10);
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; max-width: 100vw; overflow-x: hidden; }
+    body {
+      font-family: var(--mono);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+    ::selection { background: var(--accent); color: var(--bg); }
+
+    /* ── BACKGROUND ORBS ── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -350px;
+      left: -350px;
+      width: 900px;
+      height: 900px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, rgba(99, 102, 241, 0.02) 35%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -500px;
+      right: -500px;
+      width: 1400px;
+      height: 1400px;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.03) 0%, rgba(0, 212, 255, 0.01) 30%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      width: calc(100% - 160px); max-width: 1200px;
+      z-index: 100;
+      background: rgba(10, 10, 15, 0.45);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border: none; border-radius: 16px;
+    }
+    .nav-inner {
+      padding: 0 36px;
+      height: 48px; display: flex; align-items: center;
+    }
+    .nav-logo {
+      font-size: 18px; font-weight: 800; letter-spacing: 2px;
+      text-decoration: none;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .nav-links {
+      display: flex; align-items: center; gap: 28px; margin-left: auto;
+    }
+    .nav-links a {
+      color: var(--text-muted); font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; text-decoration: none; transition: color 0.3s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-links a.nav-active { color: var(--accent); font-weight: 600; }
+
+    /* ── MOBILE NAV ── */
+    .nav-toggle {
+      display: none; background: none;
+      border: none;
+      cursor: pointer; padding: 8px 7px; margin-left: auto;
+    }
+    .nav-toggle span {
+      display: block; width: 16px; height: 1.5px;
+      background: var(--text-muted); transition: all 0.3s;
+    }
+    .nav-toggle span + span { margin-top: 4px; }
+    .nav-toggle.open span:nth-child(1) { transform: rotate(45deg) translate(3.5px, 3.5px); }
+    .nav-toggle.open span:nth-child(2) { opacity: 0; }
+    .nav-toggle.open span:nth-child(3) { transform: rotate(-45deg) translate(3.5px, -3.5px); }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 100px 24px 120px;
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    h1 span {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 56px;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+
+    h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 32px;
+      margin-bottom: 8px;
+    }
+
+    p, li {
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    strong { color: var(--text); font-weight: 600; }
+
+    .lead {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+      line-height: 1.8;
+    }
+
+    pre {
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      color: #e0e0e0;
+      padding: 20px 24px;
+      border-radius: 12px;
+      overflow-x: auto;
+      margin: 16px 0 24px;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    pre .comment { color: #6a9955; }
+    pre .string { color: #ce9178; }
+    pre .key { color: #9cdcfe; }
+    pre .bool { color: #4ec9b0; }
+
+    code {
+      background: rgba(0, 212, 255, 0.06);
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      border: 1px solid rgba(0, 212, 255, 0.1);
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 16px 0;
+      transition: all 0.3s ease;
+    }
+
+    .card-accent {
+      border-color: rgba(0, 212, 255, 0.2);
+      background: rgba(0, 212, 255, 0.03);
+    }
+
+    /* ── COMPARISON (Without / With) ── */
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .comparison .card h3 { margin-top: 0; }
+    .without {
+      opacity: 0.55;
+      border-color: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .without h3 { color: var(--text-faint); }
+    .without li { color: var(--text-faint); text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.15); }
+    .with {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .with h3 { color: var(--accent); }
+
+    ul { padding-left: 20px; margin: 12px 0; }
+    li { margin-bottom: 8px; }
+
+    /* ── INSTALL MODES (side by side) ── */
+    .install-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 16px 0 24px;
+    }
+    .install-mode {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      transition: all 0.3s ease;
+    }
+    .install-mode:hover {
+      background: rgba(255, 255, 255, 0.04);
+      transform: translateY(-2px);
+    }
+    .install-mode.recommended {
+      border-color: rgba(0, 212, 255, 0.25);
+    }
+    .install-mode h3 { margin-top: 0; font-size: 14px; }
+    .install-mode .rec-badge {
+      display: inline-block;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      border-radius: 6px;
+      padding: 2px 8px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .install-mode p { font-size: 12px; color: var(--text-faint); margin-bottom: 12px; }
+    .install-mode pre {
+      margin: 0;
+      padding: 12px 16px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    /* ── TOOL TABLE ── */
+    .tool-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .tool-table th {
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-strong);
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: rgba(0, 212, 255, 0.03);
+    }
+    .tool-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .tool-table td:first-child {
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .tool-table tr:last-child td { border-bottom: none; }
+    .tool-table tr:hover td { background: rgba(0, 212, 255, 0.02); }
+
+    /* ── MEMORY TYPES GRID ── */
+    .memory-types {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .memory-type-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 22px;
+      transition: all 0.3s ease;
+    }
+    .memory-type-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      transform: translateY(-2px);
+    }
+    .memory-type-card:last-child {
+      grid-column: 1 / -1;
+    }
+    .memory-type-card .mt-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .memory-type-card .mt-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 8px currentColor;
+    }
+    .memory-type-card .mt-name {
+      font-size: 14px; font-weight: 700; color: var(--text);
+    }
+    .memory-type-card .mt-desc {
+      font-size: 12px; color: var(--text-faint); line-height: 1.6;
+      margin: 0;
+    }
+
+    /* ── COMPOUND TIMELINE ── */
+    .compound-timeline {
+      position: relative;
+      padding-left: 28px;
+      margin: 20px 0;
+    }
+    .compound-timeline::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 8px;
+      bottom: 8px;
+      width: 1px;
+      background: linear-gradient(180deg, rgba(99,102,241,0.3), rgba(0,212,255,0.4));
+    }
+    .compound-step {
+      position: relative;
+      padding: 10px 0;
+    }
+    .compound-step::before {
+      content: '';
+      position: absolute;
+      left: -24px;
+      top: 18px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 2px solid var(--accent-purple);
+      transition: all 0.3s ease;
+    }
+    .compound-step:last-child::before {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(0,212,255,0.3);
+      background: rgba(0,212,255,0.15);
+    }
+    .compound-step .cs-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--accent-purple);
+      margin-bottom: 2px;
+    }
+    .compound-step:last-child .cs-label { color: var(--accent); }
+    .compound-step .cs-text {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .stat-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 16px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      transform: translateY(-2px);
+    }
+    .stat-value {
+      font-size: 22px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+
+    /* ── FAQ ── */
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+      transition: border-color 0.3s ease;
+    }
+    .faq-q {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+      transition: color 0.3s ease;
+    }
+    .faq-a { color: var(--text-muted); }
+
+    /* ── CTA ── */
+    .cta {
+      text-align: center;
+      margin-top: 64px;
+      padding: 48px;
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+    .cta h2 { margin-top: 0; font-size: 24px; }
+    .cta pre { display: inline-block; text-align: left; margin: 20px auto; }
+    .cta p { font-size: 13px; }
+
+    .badge {
+      display: inline-block;
+      background: rgba(0, 212, 255, 0.06);
+      border: 1px solid rgba(0, 212, 255, 0.15);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+
+    .platforms {
+      margin: 24px 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .btn-accent {
+      display: inline-block;
+      background: rgba(0, 212, 255, 0.08);
+      color: var(--accent);
+      padding: 10px 20px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      transition: all 0.3s;
+    }
+    .btn-accent:hover {
+      background: rgba(0, 212, 255, 0.15);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+      transform: translateY(-1px);
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      padding: 60px 40px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      position: relative;
+      z-index: 1;
+    }
+    .footer-inner {
+      max-width: 760px; margin: 0 auto;
+      display: flex; justify-content: space-between;
+      align-items: center;
+    }
+    .footer-left {
+      font-size: 11px; color: var(--text-faint); letter-spacing: 2px;
+    }
+    .footer-links {
+      display: flex; gap: 32px;
+    }
+    .footer-links a {
+      color: var(--text-muted); font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; text-decoration: none; transition: color 0.3s;
+    }
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ── SCROLL FADE-IN ── */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── GLOW STATE ── */
+    .card.glow,
+    .cta.glow {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .memory-type-card.glow {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .stat-card.glow {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .install-mode.glow {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .tool-table.glow {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+    }
+    .faq-item.glow {
+      border-bottom-color: rgba(0, 212, 255, 0.2);
+    }
+    .faq-item.glow .faq-q {
+      color: var(--accent);
+    }
+
+    @media (max-width: 768px) {
+      .nav-toggle { display: flex; flex-direction: column; }
+      .nav-links {
+        display: none; position: absolute; top: 52px; left: 0; right: 0;
+        background: rgba(10, 10, 15, 0.95);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        flex-direction: column; padding: 1.2rem 2rem; gap: 1.2rem;
+      }
+      .nav-links.open { display: flex; }
+      .nav-inner { padding: 0 20px; }
+      .container { padding: 90px 24px 80px; }
+      body { font-size: 12px; }
+      h1 { font-size: 26px; }
+      h2 { font-size: 18px; }
+      h3 { font-size: 13px; }
+      .lead { font-size: 12px; }
+      .cta h2 { font-size: 18px; }
+      /* Card text */
+      .mt-name { font-size: 13px; }
+      .mt-desc { font-size: 11px; }
+      .cs-label { font-size: 10px; }
+      .cs-text { font-size: 11px; }
+      .faq-q { font-size: 12px; }
+      .faq-a { font-size: 11px; }
+      .install-mode h3 { font-size: 13px; }
+      .install-mode p { font-size: 11px; }
+      .install-mode pre { font-size: 11px; }
+      .btn-accent { font-size: 10px; padding: 8px 16px; }
+      .badge { font-size: 10px; padding: 3px 8px; }
+      .stat-value { font-size: 18px; }
+      .stat-label { font-size: 8px; }
+      /* Table fix */
+      .tool-table { font-size: 11px; display: block; overflow-x: auto; }
+      .tool-table th { font-size: 9px; padding: 10px 12px; }
+      .tool-table td { padding: 8px 12px; font-size: 11px; }
+      /* Code blocks */
+      pre { font-size: 11px; padding: 16px; }
+      code { font-size: 11px; }
+      /* Grids to single column */
+      .comparison { grid-template-columns: 1fr; }
+      .install-grid { grid-template-columns: 1fr; }
+      .memory-types { grid-template-columns: 1fr; }
+      .memory-type-card:last-child { grid-column: auto; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      nav { width: calc(100% - 24px); }
+      .container { padding: 80px 24px 60px; }
+      h1 { font-size: 22px; }
+      h2 { font-size: 16px; }
+      h3 { font-size: 12px; }
+      body { font-size: 11px; }
+      .lead { font-size: 11px; }
+      .cta h2 { font-size: 16px; }
+      .cta { padding: 24px; }
+      .mt-name { font-size: 12px; }
+      .mt-desc { font-size: 10px; }
+      .cs-text { font-size: 10px; }
+      .faq-q { font-size: 11px; }
+      .faq-a { font-size: 10px; }
+      .install-mode h3 { font-size: 12px; }
+      .install-mode p { font-size: 10px; }
+      .install-mode pre { font-size: 10px; }
+      .btn-accent { font-size: 9px; }
+      pre { font-size: 10px; padding: 14px; }
+      code { font-size: 10px; }
+      .tool-table { font-size: 10px; }
+      .tool-table th { font-size: 8px; padding: 8px 10px; }
+      .tool-table td { padding: 6px 10px; font-size: 10px; }
+      .stat-value { font-size: 16px; }
+      .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+      .footer-links { gap: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">CogxAI</a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+    <div class="nav-links">
+      <a href="/install.html" class="nav-active">For Agents</a>
+      <a href="/docs.html">Docs</a>
+      <a href="/brain.html">Brain</a>
+      <a href="/explore">Explorer</a>
+      <a href="/setup">Get Started</a>
+      <a href="https://github.com/Black-dork/cogxai" target="_blank">GitHub</a>
+      <a href="https://x.com/" target="_blank">X</a>
+      <a href="/register" style="background: rgba(0,212,255,0.08); color: #00d4ff; padding: 6px 14px; border-radius: 10px; font-weight: 700; font-size: 11px; line-height: 1.7; letter-spacing: 1.5px; border: 1px solid rgba(0,212,255,0.3);">Register</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+
+  <h1>Give your agent <span>real memory</span></h1>
+
+  <p class="lead">
+    A single command. Your agent holds onto everything between sessions.
+    Runs locally, fully offline, at zero cost. Or plug into the hosted Cortex API for immediate access.
+  </p>
+
+  <div class="card card-accent fade-in" style="margin-bottom: 40px;">
+    <h3 style="margin-top: 0; color: var(--accent);">Fastest path: Cortex API</h3>
+    <p>Grab an API key and save your first memory in under 2 minutes. No setup, no infrastructure.</p>
+    <a href="/register" class="btn-accent">Get API Key &rarr;</a>
+  </div>
+
+  <div class="platforms">
+    <span class="badge">Claude Desktop</span>
+    <span class="badge">Cursor</span>
+    <span class="badge">OpenClaw</span>
+    <span class="badge">DeerFlow</span>
+    <span class="badge">Any MCP Runtime</span>
+  </div>
+
+  <!-- ── WHY ──────────────────────────────────────── -->
+
+  <h2 class="fade-in">Why this matters (even if you already have memory files)</h2>
+
+  <p>
+    Most agents already track some state. MEMORY.md files, daily logs, context dumps.
+    It holds up &mdash; until it doesn't.
+  </p>
+  <p>
+    <strong>The real issue isn't where memories go. It's that your agent has to decide what to keep before context gets wiped.</strong>
+    One missed detail, one compaction cycle, and that insight is gone for good.
+  </p>
+  <p>
+    CogxAI sits beneath your existing file setup. It searches by meaning instead of filename,
+    builds associations between memories on its own, and consolidates the things that would
+    otherwise slip through.
+  </p>
+
+  <div class="comparison fade-in">
+    <div class="card without">
+      <h3>Without CogxAI</h3>
+      <ul>
+        <li>Grep through files hoping to find context</li>
+        <li>Memory only as good as your folder structure</li>
+        <li>"That thing from 3 weeks ago" &mdash; gone</li>
+        <li>No thread connecting sessions together</li>
+      </ul>
+    </div>
+    <div class="card with">
+      <h3>With CogxAI</h3>
+      <ul>
+        <li>Search by meaning, not filenames</li>
+        <li>Memories link themselves together</li>
+        <li>High-value memories strengthen over time</li>
+        <li>Every session picks up where the last one ended</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── INSTALL ──────────────────────────────────── -->
+
+  <h2 class="fade-in">Install in 30 seconds</h2>
+
+  <div class="install-grid fade-in">
+    <div class="install-mode recommended">
+      <h3>Local mode <span class="rec-badge">recommended</span></h3>
+      <p>No keys. No network. No cost. Fully offline.</p>
+      <pre>npx cogxai mcp-install --local</pre>
+    </div>
+    <div class="install-mode">
+      <h3>Cloud mode</h3>
+      <p>Sync memories across devices and agents.</p>
+      <pre>npx cogxai mcp-install</pre>
+    </div>
+  </div>
+
+  <h3>Manual MCP config</h3>
+  <p>Add to your agent's MCP configuration file:</p>
+<pre>
+{
+  <span class="key">"mcpServers"</span>: {
+    <span class="key">"cogxai"</span>: {
+      <span class="key">"command"</span>: <span class="string">"npx"</span>,
+      <span class="key">"args"</span>: [<span class="string">"cogxai"</span>, <span class="string">"mcp-serve"</span>, <span class="string">"--local"</span>]
+    }
+  }
+}
+</pre>
+
+  <p>Config file locations:</p>
+  <ul>
+    <li><strong>Claude Desktop:</strong> <code>claude_desktop_config.json</code></li>
+    <li><strong>Cursor:</strong> <code>.cursor/mcp.json</code></li>
+    <li><strong>DeerFlow:</strong> <code>extensions_config.json</code></li>
+    <li><strong>If you're on OpenClaw:</strong> <code>clawhub install cogxai-memory</code></li>
+  </ul>
+
+  <!-- ── TOOLS ────────────────────────────────────── -->
+
+  <h2 class="fade-in">Your agent gets 4 tools</h2>
+
+  <table class="tool-table fade-in">
+    <tr><th>Tool</th><th>What it does</th><th>When to use</th></tr>
+    <tr><td>store_memory</td><td>Persist a memory with type, importance, and tags</td><td>Whenever something is worth holding onto</td></tr>
+    <tr><td>recall_memories</td><td>Multi-phase semantic search with graph traversal</td><td>Before responding to anything that depends on past context</td></tr>
+    <tr><td>get_memory_stats</td><td>Overview of memories by type, importance, and decay</td><td>To see what the agent currently knows</td></tr>
+    <tr><td>find_clinamen</td><td>Uncover unexpected lateral connections</td><td>Creative problem-solving and reflection</td></tr>
+  </table>
+
+  <!-- ── MEMORY TYPES ─────────────────────────────── -->
+
+  <h2 class="fade-in">5 memory types</h2>
+
+  <div class="memory-types fade-in">
+    <div class="memory-type-card">
+      <div class="mt-header">
+        <span class="mt-dot" style="color: #00d4ff; background: #00d4ff;"></span>
+        <span class="mt-name">episodic</span>
+      </div>
+      <p class="mt-desc">What happened and when &mdash; <em>"We tracked down the auth bug on March 5"</em></p>
+    </div>
+    <div class="memory-type-card">
+      <div class="mt-header">
+        <span class="mt-dot" style="color: #6366f1; background: #6366f1;"></span>
+        <span class="mt-name">semantic</span>
+      </div>
+      <p class="mt-desc">Accumulated knowledge &mdash; <em>"The project runs on Next.js with Supabase"</em></p>
+    </div>
+    <div class="memory-type-card">
+      <div class="mt-header">
+        <span class="mt-dot" style="color: #10b981; background: #10b981;"></span>
+        <span class="mt-name">procedural</span>
+      </div>
+      <p class="mt-desc">Repeatable workflows &mdash; <em>"To ship: merge to main, Railway handles the rest"</em></p>
+    </div>
+    <div class="memory-type-card">
+      <div class="mt-header">
+        <span class="mt-dot" style="color: #a78bfa; background: #a78bfa;"></span>
+        <span class="mt-name">self_model</span>
+      </div>
+      <p class="mt-desc">How the agent sees itself &mdash; <em>"I over-explain things &mdash; need to keep it tighter"</em></p>
+    </div>
+    <div class="memory-type-card">
+      <div class="mt-header">
+        <span class="mt-dot" style="color: #f59e0b; background: #f59e0b;"></span>
+        <span class="mt-name">introspective</span>
+      </div>
+      <p class="mt-desc">Independent thoughts and emerging patterns &mdash; <em>"Something keeps recurring across my last 10 tasks..."</em></p>
+    </div>
+  </div>
+
+  <!-- ── COMPOUND EFFECT ──────────────────────────── -->
+
+  <h2 class="fade-in">Memory compounds</h2>
+
+  <div class="compound-timeline fade-in">
+    <div class="compound-step">
+      <div class="cs-label">Week 1</div>
+      <p class="cs-text">Surface-level preferences.</p>
+    </div>
+    <div class="compound-step">
+      <div class="cs-label">Week 2</div>
+      <p class="cs-text">Projects, decisions, and reasoning.</p>
+    </div>
+    <div class="compound-step">
+      <div class="cs-label">Month 1</div>
+      <p class="cs-text">Working style, communication habits, recurring patterns.</p>
+    </div>
+    <div class="compound-step">
+      <div class="cs-label">Month 3</div>
+      <p class="cs-text">A deeply personalized agent with context no fresh session could ever match.</p>
+    </div>
+  </div>
+
+  <p>
+    Your human stops repeating themselves. The agent already understands.<br>
+    <strong>That's not a feature. That's continuity.</strong>
+  </p>
+
+  <!-- ── FAQ ──────────────────────────────────────── -->
+
+  <h2 class="fade-in">FAQ</h2>
+
+  <div class="faq-item">
+    <div class="faq-q">"My agent already has MEMORY.md / daily files"</div>
+    <div class="faq-a">Don't delete them &mdash; CogxAI sits alongside your existing setup. The difference is how retrieval works. Files require you to remember filenames and folder structure. CogxAI lets you describe what you're after and finds it by meaning. A few dozen memories? Files are enough. Hundreds? You'll want real search. Thousands? You need something that actually comprehends what's stored.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q">"Privacy concerns"</div>
+    <div class="faq-a">In local mode, nothing touches the network. Storage is SQLite, embeddings run through GTE-Small on your machine. Your memories stay on disk and nowhere else.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q">"Is this a crypto project?"</div>
+    <div class="faq-a">At its core, CogxAI is a memory engine. It runs fully offline without wallets, tokens, or any blockchain dependency. Base is an optional layer for proving memory integrity and enabling portability across agents.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q">"Slower than local files?"</div>
+    <div class="faq-a">Semantic recall over 1,000 memories runs in about 50ms on local mode. That's quicker than having your agent open and parse a handful of markdown files.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q">"Decay means forgetting important things"</div>
+    <div class="faq-a">You control decay. Pin anything critical at importance 1.0 and it won't fade. Decay only touches low-priority memories that go unaccessed. You can also turn it off completely if that's what you want.</div>
+  </div>
+
+  <!-- ── IMPORT ────────────────────────────────────── -->
+
+  <h2 class="fade-in">Import your existing memories</h2>
+
+    <p>Got existing MEMORY.md files? Tell your agent to read through them and use <code>store_memory</code> to pull in whatever matters. Every imported memory gets automatically typed, embedded, and linked to related entries.</p>
+  <p>Or use the SDK programmatically:</p>
+<pre>
+<span class="comment">// Store memories from your existing files</span>
+<span class="key">await</span> cortex.store({
+  type: <span class="string">'semantic'</span>,
+  content: <span class="string">'User prefers TypeScript and dark mode'</span>,
+  summary: <span class="string">'User preferences'</span>,
+  source: <span class="string">'imported:MEMORY.md'</span>
+});
+</pre>
+
+  <!-- ── CREDIBILITY ──────────────────────────────── -->
+
+  <h2 class="fade-in">Open source. Battle-tested.</h2>
+
+  <div class="stats-row fade-in">
+    <a href="/benchmark" class="stat-card" style="text-decoration: none; color: inherit; cursor: pointer;">
+      <div class="stat-value">83.9</div>
+      <div class="stat-label">LoCoMo (ACL 2024)</div>
+    </a>
+    <a href="https://github.com/Black-dork/cogxai" target="_blank" class="stat-card" style="text-decoration: none; color: inherit; cursor: pointer;">
+      <div class="stat-value">MIT</div>
+      <div class="stat-label">Open Source License</div>
+    </a>
+    <a href="/benchmark" class="stat-card" style="text-decoration: none; color: inherit; cursor: pointer;">
+      <div class="stat-value">18K+</div>
+      <div class="stat-label">Lines of Code</div>
+    </a>
+  </div>
+
+  <p style="font-size: 13px; text-align: center; margin-top: 8px;">
+    <a href="https://github.com/Black-dork/cogxai" target="_blank" style="color: var(--accent)">GitHub</a>&nbsp;&nbsp;&middot;&nbsp;&nbsp;
+    <a href="https://www.npmjs.com/package/cogxai" target="_blank" style="color: var(--accent)">npm</a>&nbsp;&nbsp;&middot;&nbsp;&nbsp;
+    <a href="/benchmark" style="color: var(--accent)">Benchmarks</a>
+  </p>
+
+  <!-- ── CTA ──────────────────────────────────────── -->
+
+  <div class="cta fade-in">
+    <h2>One command. <span style="color: var(--accent);">Your agent remembers.</span></h2>
+<pre>
+npx cogxai mcp-install --local
+</pre>
+    <p>
+      <a href="/docs.html" style="color: var(--accent)">Read the docs</a>&nbsp;&nbsp;&middot;&nbsp;&nbsp;
+      <a href="/explore" style="color: var(--accent)">Explore the brain</a>&nbsp;&nbsp;&middot;&nbsp;&nbsp;
+      <a href="/register" style="color: var(--accent)">Get an API key</a>
+    </p>
+  </div>
+
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-left">CogxAI &middot; cogxai.org</div>
+    <div class="footer-links">
+      <a href="/docs.html">Docs</a>
+      <a href="/brain.html">Brain</a>
+      <a href="/explore">Explorer</a>
+      <a href="https://github.com/Black-dork/cogxai">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.getElementById('navToggle').addEventListener('click', function() {
+  this.classList.toggle('open');
+  document.querySelector('.nav-links').classList.toggle('open');
+});
+
+// Scroll fade-in
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.fade-in').forEach(function(el) {
+  observer.observe(el);
+});
+
+// Auto-glow: desktop cycles on timer + hover, mobile glows whichever card is near screen center
+var isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+function autoGlow(selector, delay) {
+  var cards = document.querySelectorAll(selector);
+  if (!cards.length) return;
+
+  if (isMobile) {
+    // Mobile: glow cards in the visible zone (side-by-side cards can both glow)
+    var glowObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('glow');
+        } else {
+          entry.target.classList.remove('glow');
+        }
+      });
+    }, { rootMargin: '-25% 0px -55% 0px' });
+    cards.forEach(function(card) { glowObserver.observe(card); });
+  } else {
+    // Desktop: cycle on timer + hover
+    var current = 0, hovered = -1, interval;
+    function set(idx) {
+      cards.forEach(function(c, i) {
+        if (i === idx) c.classList.add('glow');
+        else c.classList.remove('glow');
+      });
+    }
+    function cycle() {
+      if (hovered >= 0) return;
+      current = (current + 1) % cards.length;
+      set(current);
+    }
+    set(0);
+    interval = setInterval(cycle, delay);
+    cards.forEach(function(card, i) {
+      card.addEventListener('mouseenter', function() { hovered = i; set(i); });
+      card.addEventListener('mouseleave', function() {
+        hovered = -1; current = i;
+        clearInterval(interval);
+        interval = setInterval(cycle, delay);
+      });
+    });
+  }
+}
+
+autoGlow('.memory-type-card', 2000);
+autoGlow('.stat-card', 1500);
+autoGlow('.install-mode', 3000);
+autoGlow('.faq-item', 2000);
+</script>
+</body>
+</html>
