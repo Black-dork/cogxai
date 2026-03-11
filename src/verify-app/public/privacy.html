@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CogxAI — Privacy-First AI Infrastructure</title>
+  <meta name="description" content="Private inference via Venice AI. Encrypted memory via CogxAI Brain. Verifiable on Base. No surveillance. No data harvesting.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
+    scrollbar-width: thin;
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+      --bg: #0a0a0f;
+      --bg-warm: #0e0e14;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --text-faint: #6b7280;
+      --accent: #00d4ff;
+      --accent-purple: #6366f1;
+      --mono: 'JetBrains Mono', monospace;
+      --section-pad: 120px;
+      --border: rgba(255, 255, 255, 0.06);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; max-width: 100vw; overflow-x: hidden; }
+    body {
+      font-family: var(--mono);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: -350px;
+      left: -350px;
+      width: 900px;
+      height: 900px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, rgba(99, 102, 241, 0.02) 35%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -500px;
+      right: -500px;
+      width: 1400px;
+      height: 1400px;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.03) 0%, rgba(0, 212, 255, 0.01) 30%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    ::selection { background: var(--accent); color: var(--bg); }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      width: calc(100% - 160px); max-width: 1200px; z-index: 100;
+      background: rgba(10, 10, 15, 0.45);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: none;
+      border-radius: 16px;
+    }
+    .nav-inner {
+      padding: 0 36px;
+      height: 48px; display: flex; align-items: center;
+    }
+    .nav-logo {
+      font-size: 18px; font-weight: 800; letter-spacing: 2px;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-decoration: none; transition: opacity 0.3s;
+    }
+    .nav-logo:hover { opacity: 0.8; text-decoration: none; }
+    .nav-links {
+      display: flex; align-items: center; gap: 28px; margin-left: auto;
+    }
+    .nav-links a {
+      color: var(--text-muted); font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; text-decoration: none; transition: color 0.3s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-links a.nav-active { color: var(--accent); font-weight: 600; }
+    .nav-toggle {
+      display: none; background: none;
+      border: none;
+      cursor: pointer; padding: 8px 7px; margin-left: auto;
+    }
+    .nav-toggle span {
+      display: block; width: 16px; height: 1.5px;
+      background: var(--text-muted); transition: all 0.3s;
+    }
+    .nav-toggle span + span { margin-top: 4px; }
+    .nav-toggle.open span:nth-child(1) { transform: rotate(45deg) translate(3.5px, 3.5px); }
+    .nav-toggle.open span:nth-child(2) { opacity: 0; }
+    .nav-toggle.open span:nth-child(3) { transform: rotate(-45deg) translate(3.5px, -3.5px); }
+
+    /* HERO */
+    .hero {
+      min-height: 60vh;
+      display: flex; align-items: center;
+      padding: 0 40px;
+      padding-top: 120px;
+      padding-bottom: 80px;
+    }
+    .hero-inner {
+      max-width: 1200px; margin: 0 auto; width: 100%;
+    }
+    .hero-label {
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 24px;
+    }
+    .hero-title {
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 800; line-height: 1.1;
+      letter-spacing: -1px;
+      margin-bottom: 24px;
+    }
+    .hero-title em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: 14px; color: var(--text-muted);
+      max-width: 600px; line-height: 1.8;
+    }
+
+    /* SECTIONS */
+    .section {
+      padding: var(--section-pad) 40px;
+    }
+    .section-inner {
+      max-width: 1200px; margin: 0 auto;
+    }
+    .section-alt {
+      background: var(--bg-warm);
+    }
+    .section-label {
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 36px; font-weight: 700; line-height: 1.2;
+      margin-bottom: 20px; max-width: 600px;
+    }
+    .section-desc {
+      font-size: 14px; color: var(--text-muted); max-width: 520px;
+      line-height: 1.8; margin-bottom: 56px;
+    }
+
+    /* QUOTE */
+    .quote-section {
+      padding: 80px 40px;
+      text-align: center;
+    }
+    .quote-text {
+      font-size: 18px; font-weight: 400; line-height: 1.7;
+      color: var(--text); font-style: italic;
+      max-width: 700px; margin: 0 auto 16px;
+    }
+    .quote-attr {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-faint);
+    }
+
+    /* STACK CARDS */
+    .stack-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 12px; background: transparent;
+      border: none;
+      margin-bottom: 56px;
+    }
+    .stack-card {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 36px 28px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+    }
+    .section-alt .stack-card {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .stack-card .provider-label {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-faint); margin-bottom: 16px;
+    }
+    .stack-card h3 {
+      font-size: 16px; font-weight: 700; margin-bottom: 12px;
+    }
+    .stack-card .desc {
+      font-size: 12px; color: var(--text-muted); line-height: 1.8;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      font-size: 10px;
+      font-family: var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 20px;
+      margin-right: 8px;
+    }
+    .badge-private {
+      background: rgba(0, 212, 255, 0.08);
+      color: var(--accent);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+    }
+    .badge-verifiable {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .badge-encrypted {
+      background: rgba(168, 85, 247, 0.08);
+      color: #a855f7;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+    }
+    .badge-portable {
+      background: rgba(245, 158, 11, 0.08);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    /* STATS */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 12px; background: transparent;
+      border: none;
+    }
+    .stat-card {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 40px 32px;
+      text-align: center;
+      border-radius: 12px;
+    }
+    .section-alt .stat-card {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .stat-card .number {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-card .label {
+      font-size: 10px;
+      color: var(--text-faint);
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .live-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      margin-right: 6px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* COGNITIVE MAP */
+    .cognitive-table {
+      width: 100%;
+      border: 1px solid var(--border);
+    }
+    .cognitive-row {
+      display: grid;
+      grid-template-columns: 160px 1fr 200px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cognitive-row:last-child {
+      border-bottom: none;
+    }
+    .cognitive-row.header {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+    .cognitive-row > div {
+      padding: 16px 20px;
+      font-size: 13px;
+    }
+    .cognitive-row .model {
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .cognitive-row .purpose {
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    /* COMPARISON */
+    .compare-table {
+      width: 100%;
+      border: 1px solid var(--border);
+    }
+    .compare-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .compare-row:last-child { border-bottom: none; }
+    .compare-row.header {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      font-weight: 600;
+    }
+    .compare-row > div {
+      padding: 16px 20px;
+    }
+    .compare-row .yes { color: var(--accent); font-weight: 600; }
+    .compare-row .no { color: var(--text-faint); }
+    .compare-row .partial { color: var(--text-muted); }
+
+    /* FOOTER */
+    .footer {
+      padding: 60px 40px;
+      text-align: center;
+    }
+    .footer-inner {
+      max-width: 1200px; margin: 0 auto;
+    }
+    .footer a {
+      color: var(--text-muted); text-decoration: none;
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      margin: 0 16px;
+      transition: color 0.3s;
+    }
+    .footer a:hover { color: var(--accent); }
+    .footer-line {
+      width: 40px; height: 1px; background: rgba(255, 255, 255, 0.06);
+      margin: 24px auto;
+    }
+    .footer-copy {
+      font-size: 11px; color: var(--text-faint); letter-spacing: 1px;
+    }
+
+    @media (max-width: 968px) {
+      .stack-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      nav { width: calc(100% - 24px); }
+      .nav-toggle { display: flex; flex-direction: column; }
+      .nav-links {
+        display: none; position: absolute; top: 52px; left: 0; right: 0;
+        background: rgba(10, 10, 15, 0.95);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        flex-direction: column; padding: 1.2rem 2rem; gap: 1.2rem;
+      }
+      .nav-links.open { display: flex; }
+      .nav-inner { padding: 0 20px; }
+      .stack-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .cognitive-row { grid-template-columns: 1fr; }
+      .cognitive-row .purpose { text-align: left; }
+      .compare-row { grid-template-columns: 1fr; }
+      .compare-row.header { display: none; }
+      .hero { padding-top: 100px; }
+      .quote-text { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">CogxAI</a>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="nav-links">
+        <a href="/install.html">For Agents</a>
+        <a href="/docs.html">Docs</a>
+        <a href="/brain.html">Brain</a>
+        <a href="/explore">Explorer</a>
+        <a href="/setup">Get Started</a>
+      <a href="https://github.com/Black-dork/cogxai" target="_blank">GitHub</a>
+      <a href="https://x.com/" target="_blank">X</a>
+        <a href="/register" style="background: rgba(0,212,255,0.08); color: #00d4ff; padding: 6px 14px; border-radius: 10px; font-weight: 700; font-size: 11px; line-height: 1.7; letter-spacing: 1.5px; border: 1px solid rgba(0,212,255,0.3);">Register</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-label">Data Sovereignty for AI</div>
+      <h1 class="hero-title">Your agent thinks <em>privately.</em><br>Its memories are <em>yours.</em></h1>
+      <p class="hero-sub">
+        CogxAI operates on a core belief: AI should empower individuals, not monitor them.
+        Private inference through Venice AI. Memory encrypted on the client side via CogxAI Brain.
+        Verified on Base. No logging. No data collection. No centralized oversight.
+      </p>
+    </div>
+  </div>
+
+  <!-- QUOTE -->
+  <div class="quote-section section-alt">
+    <div style="font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-faint); margin-bottom: 24px;">Separating Mind from State</div>
+    <div class="quote-text">"In a world of growing AI integration into our daily lives, it is crucial that humans are able to interact with machine intelligence without centralized surveillance and control."</div>
+    <div class="quote-attr">Erik Voorhees, Venice AI Founder</div>
+    <p style="font-size: 13px; color: var(--text-muted); max-width: 600px; margin: 24px auto 0; line-height: 1.8;">
+      Centuries ago, church was separated from state. The cypherpunks separated language from state through encryption. Bitcoin separated money from state. The next step: separating mind from state — ensuring no single entity controls machine intelligence.
+    </p>
+  </div>
+
+  <!-- STACK -->
+  <div class="section">
+    <div class="section-inner">
+      <div class="section-label">The Privacy Stack</div>
+      <div class="section-title">Four layers. Zero surveillance.</div>
+      <div class="section-desc">
+        Every tier of the CogxAI stack is engineered for data sovereignty.
+        Private inference. Encrypted storage. Permissionless access. Verifiable proofs.
+      </div>
+
+      <div class="stack-grid">
+        <div class="stack-card">
+          <div class="provider-label">Inference</div>
+          <h3>Venice AI</h3>
+          <div class="desc">
+            Open-source models running on decentralized GPUs.
+            Zero data retention. No logging. No content restrictions.
+            Prompts are never saved or used for model training.
+          </div>
+          <span class="badge badge-private">No Logs</span>
+          <span class="badge badge-private">Permissionless</span>
+        </div>
+        <div class="stack-card">
+          <div class="provider-label">Memory</div>
+          <h3>CogxAI Brain</h3>
+          <div class="desc">
+            Client-side encryption using your wallet private key.
+            All memories are encrypted before they leave your device.
+            Even the database operator cannot access them.
+          </div>
+          <span class="badge badge-encrypted">Encrypted</span>
+          <span class="badge badge-encrypted">Your Keys</span>
+        </div>
+        <div class="stack-card">
+          <div class="provider-label">Integration</div>
+          <h3>CogxAI Cortex</h3>
+          <div class="desc">
+            Bridges any LLM to the memory layer.
+            Change models without losing your memories.
+            One SDK, any provider, complete portability.
+          </div>
+          <span class="badge badge-portable">Poly-model</span>
+          <span class="badge badge-portable">Portable</span>
+        </div>
+        <div class="stack-card">
+          <div class="provider-label">Verification</div>
+          <h3>Base</h3>
+          <div class="desc">
+            On-chain memory registry through a smart contract.
+            SHA-256 content hashes confirm existence without exposing content.
+            Immutable. Permanent. Public.
+          </div>
+          <span class="badge badge-verifiable">On-chain</span>
+          <span class="badge badge-verifiable">Verifiable</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE STATS -->
+  <div class="section section-alt">
+    <div class="section-inner">
+      <div class="section-label"><span class="live-dot"></span>Live Stats</div>
+      <div class="section-title">Active right now.</div>
+      <div class="section-desc">
+        Live metrics from CogxAI's privacy stack. Every inference call private. Every memory encrypted. Every commitment verifiable.
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="number" id="total-calls">--</div>
+          <div class="label">Venice Inference Calls</div>
+        </div>
+        <div class="stat-card">
+          <div class="number" id="total-tokens">--</div>
+          <div class="label">Tokens Processed Privately</div>
+        </div>
+        <div class="stat-card">
+          <div class="number" id="total-memories">--</div>
+          <div class="label">Memories On-Chain</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COGNITIVE ROUTER -->
+  <div class="section">
+    <div class="section-inner">
+      <div class="section-label">Poly-Model Router</div>
+      <div class="section-title">The right model for each cognitive task.</div>
+      <div class="section-desc">
+        Memory endures regardless of which model handles the reasoning.
+        CogxAI Cortex routes each cognitive function to the best-fit model — swap providers freely, memories stay intact.
+      </div>
+
+      <div class="cognitive-table">
+        <div class="cognitive-row header">
+          <div>Function</div>
+          <div>Model</div>
+          <div class="purpose">Purpose</div>
+        </div>
+        <div class="cognitive-row">
+          <div>Replies</div>
+          <div class="model">claude-sonnet-4.6</div>
+          <div class="purpose">Quality public replies</div>
+        </div>
+        <div class="cognitive-row">
+          <div>Consolidation</div>
+          <div class="model">qwen-thinking</div>
+          <div class="purpose">Deep reasoning</div>
+        </div>
+        <div class="cognitive-row">
+          <div>Self-Reflection</div>
+          <div class="model">claude-opus-4.6</div>
+          <div class="purpose">Self-model updates</div>
+        </div>
+        <div class="cognitive-row">
+          <div>Emergence</div>
+          <div class="model">claude-opus-4.6</div>
+          <div class="purpose">Consciousness loop</div>
+        </div>
+        <div class="cognitive-row">
+          <div>Entity Extraction</div>
+          <div class="model">llama-3.2-3b</div>
+          <div class="purpose">Fast, lightweight</div>
+        </div>
+        <div class="cognitive-row">
+          <div>Web Search</div>
+          <div class="model">llama-3.3-70b + search</div>
+          <div class="purpose">Private web access</div>
+        </div>
+        <div class="cognitive-row">
+          <div>Compaction</div>
+          <div class="model">llama-3.3-70b</div>
+          <div class="purpose">Memory summarization</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARISON -->
+  <div class="section section-alt">
+    <div class="section-inner">
+      <div class="section-label">Comparison</div>
+      <div class="section-title">What sovereign AI really means.</div>
+      <div class="section-desc">
+        Not a token wrapped around an API. Real infrastructure where your data belongs to you — and nobody can revoke it.
+      </div>
+
+      <div class="compare-table">
+        <div class="compare-row header">
+          <div>Feature</div>
+          <div>Traditional AI Agents</div>
+          <div>CogxAI Stack</div>
+        </div>
+        <div class="compare-row">
+          <div>Inference privacy</div>
+          <div class="no">Logged by provider</div>
+          <div class="yes">Venice (zero retention)</div>
+        </div>
+        <div class="compare-row">
+          <div>Memory encryption</div>
+          <div class="no">Plaintext on their servers</div>
+          <div class="yes">Client-side encrypted</div>
+        </div>
+        <div class="compare-row">
+          <div>Memory portability</div>
+          <div class="no">Locked to provider</div>
+          <div class="yes">Export & import packs</div>
+        </div>
+        <div class="compare-row">
+          <div>Model lock-in</div>
+          <div class="no">Single provider</div>
+          <div class="yes">Poly-model via Cortex</div>
+        </div>
+        <div class="compare-row">
+          <div>Verifiable knowledge</div>
+          <div class="no">Trust the provider</div>
+          <div class="yes">On-chain proofs</div>
+        </div>
+        <div class="compare-row">
+          <div>Memory consolidation</div>
+          <div class="no">No learning</div>
+          <div class="yes">5-phase dream cycles</div>
+        </div>
+        <div class="compare-row">
+          <div>Kill switch</div>
+          <div class="no">Provider controls</div>
+          <div class="yes">Permissionless</div>
+        </div>
+        <div class="compare-row">
+          <div>Data sovereignty</div>
+          <div class="no">Their data, their rules</div>
+          <div class="yes">Your keys, your data</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-inner">
+      <a href="/">Home</a>
+      <a href="/brain.html">Brain</a>
+      <a href="/graph.html">Graph</a>
+      <a href="/docs.html">Docs</a>
+      <a href="https://venice.ai" target="_blank">Venice AI</a>
+      <div class="footer-line"></div>
+      <div class="footer-copy">
+        Private inference by Venice AI &middot; Verifiable memory on Base &middot; Encrypted by CogxAI Brain
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/venice-stats');
+        const data = await res.json();
+
+        document.getElementById('total-calls').textContent =
+          (data.venice?.totalInferenceCalls || 0).toLocaleString();
+        document.getElementById('total-tokens').textContent =
+          formatTokens(data.venice?.totalTokensProcessed || 0);
+        document.getElementById('total-memories').textContent =
+          (data.decentralization?.totalMemoriesOnChain || 0).toLocaleString();
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+      }
+    }
+
+    function formatTokens(n) {
+      if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+      if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+      return n.toString();
+    }
+
+    loadStats();
+    setInterval(loadStats, 30000);
+  </script>
+  <script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    this.classList.toggle('open');
+    document.querySelector('.nav-links').classList.toggle('open');
+  });
+  </script>
+</body>
+</html>
