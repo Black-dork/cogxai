@@ -1,0 +1,2017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CogxAI — Persistent Memory for AI Agents</title>
+  <meta name="description" content="Equip your AI agent with lasting memory. Encrypted, transferable, and fully under your control. CogxAI gives any AI total recall — across conversations, across platforms.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
+    scrollbar-width: thin;
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+      --bg: #0a0a0f;
+      --bg-warm: #0d0d14;
+      --bg-card: #111118;
+      --bg-card-hover: #161620;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --text-faint: #6b7280;
+      --accent: #00d4ff;
+      --accent-purple: #6366f1;
+      --accent-glow: rgba(0, 212, 255, 0.15);
+      --accent-glow-strong: rgba(0, 212, 255, 0.25);
+      --border: rgba(255, 255, 255, 0.06);
+      --border-accent: rgba(0, 212, 255, 0.2);
+      --mono: 'JetBrains Mono', monospace;
+      --section-pad: 120px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--mono);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    ::selection { background: var(--accent); color: var(--bg); }
+
+    /* ── BACKGROUND ORBS ── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -350px;
+      left: -350px;
+      width: 900px;
+      height: 900px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, rgba(99, 102, 241, 0.02) 35%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -500px;
+      right: -500px;
+      width: 1400px;
+      height: 1400px;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.03) 0%, rgba(0, 212, 255, 0.01) 30%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      width: calc(100% - 160px); max-width: 1200px;
+      z-index: 100;
+      background: rgba(10, 10, 15, 0.45);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: none;
+      border-radius: 16px;
+    }
+    .nav-inner {
+      padding: 0 36px;
+      height: 48px; display: flex; align-items: center;
+    }
+    .nav-logo {
+      font-size: 18px; font-weight: 800; letter-spacing: 2px;
+      color: var(--text); text-decoration: none;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-links {
+      display: flex; align-items: center; gap: 28px; margin-left: auto;
+    }
+    .nav-links a {
+      color: var(--text-muted); font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; text-decoration: none; transition: color 0.3s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-links a.nav-active { color: var(--accent); font-weight: 600; }
+
+    /* ── MOBILE NAV ── */
+    .nav-toggle {
+      display: none; background: none;
+      border: none;
+      cursor: pointer; padding: 8px 7px; margin-left: auto;
+    }
+    .nav-toggle span {
+      display: block; width: 16px; height: 1.5px;
+      background: var(--text-muted); transition: all 0.3s;
+    }
+    .nav-toggle span + span { margin-top: 4px; }
+    .nav-toggle.open span:nth-child(1) { transform: rotate(45deg) translate(3.5px, 3.5px); }
+    .nav-toggle.open span:nth-child(2) { opacity: 0; }
+    .nav-toggle.open span:nth-child(3) { transform: rotate(-45deg) translate(3.5px, -3.5px); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 0 20px;
+      padding-top: 56px;
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+    }
+    .hero-canvas {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .hero-inner {
+      max-width: 1400px; margin: 0 auto; width: 100%;
+      padding-left: 40px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-text {
+      max-width: 620px;
+      padding-top: 40px;
+      padding-bottom: 120px;
+    }
+    .hero-label {
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 24px;
+      opacity: 0.8;
+    }
+    .hero-title {
+      font-size: clamp(28px, 5vw, 56px);
+      font-weight: 800; line-height: 1.1;
+      letter-spacing: -1px;
+      margin-bottom: 24px;
+    }
+    .hero-title em {
+      font-style: normal;
+      position: relative;
+      display: inline-block;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: glitch 2s infinite;
+    }
+    .hero-title em::before,
+    .hero-title em::after {
+      content: 'remember';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      opacity: 0;
+    }
+    .hero-title em::before {
+      animation: glitchBefore 2s infinite;
+      text-shadow: none;
+    }
+    .hero-title em::after {
+      animation: glitchAfter 2s infinite;
+      text-shadow: none;
+    }
+    @keyframes glitch {
+      0%, 70%, 100% { transform: none; opacity: 1; }
+      72% { transform: skewX(-4deg) translateX(-3px); opacity: 1; }
+      75% { transform: skewX(5deg) translateX(4px); opacity: 1; }
+      78% { transform: skewX(-3deg) translateX(-2px); opacity: 0.9; }
+      81% { transform: skewX(4deg) translateX(3px); opacity: 1; }
+      84% { transform: skewX(-2deg); opacity: 0.95; }
+      87% { transform: skewX(3deg) translateX(2px); opacity: 1; }
+      90% { transform: none; opacity: 1; }
+    }
+    @keyframes glitchBefore {
+      0%, 70%, 100% { opacity: 0; transform: none; }
+      72% { opacity: 0.9; transform: translateX(-5px) translateY(2px); clip-path: inset(15% 0 45% 0); }
+      75% { opacity: 0; }
+      77% { opacity: 0.8; transform: translateX(5px) translateY(-2px); clip-path: inset(55% 0 10% 0); }
+      80% { opacity: 0; }
+      82% { opacity: 0.7; transform: translateX(-4px) translateY(1px); clip-path: inset(25% 0 35% 0); }
+      85% { opacity: 0.9; transform: translateX(3px); clip-path: inset(40% 0 20% 0); }
+      88% { opacity: 0; }
+    }
+    @keyframes glitchAfter {
+      0%, 70%, 100% { opacity: 0; transform: none; }
+      71% { opacity: 0.8; transform: translateX(4px) translateY(-3px); clip-path: inset(50% 0 15% 0); }
+      74% { opacity: 0; }
+      76% { opacity: 0.7; transform: translateX(-6px) translateY(2px); clip-path: inset(10% 0 55% 0); }
+      79% { opacity: 0; }
+      81% { opacity: 0.6; transform: translateX(5px) translateY(-1px); clip-path: inset(35% 0 30% 0); }
+      84% { opacity: 0.8; transform: translateX(-3px); clip-path: inset(60% 0 5% 0); }
+      87% { opacity: 0; }
+    }
+    .hero-sub {
+      font-size: 14px; color: var(--text-muted);
+      max-width: 580px; line-height: 1.8;
+      margin-bottom: 40px;
+    }
+    .hero-actions { display: flex; gap: 12px; }
+    .btn {
+      font-family: var(--mono);
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 14px 28px; text-decoration: none;
+      transition: all 0.25s ease; cursor: pointer;
+      border: none;
+      border-radius: 12px;
+    }
+    .btn-primary {
+      background: rgba(0, 212, 255, 0.08);
+      color: var(--accent);
+      font-weight: 700;
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      animation: btnPulse 2.5s ease-in-out infinite;
+    }
+    @keyframes btnPulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(0, 212, 255, 0.08); }
+      50% { box-shadow: 0 0 30px rgba(0, 212, 255, 0.35); border-color: rgba(0, 212, 255, 0.65); }
+    }
+    .btn-primary:hover {
+      background: rgba(0, 212, 255, 0.15);
+      border-color: var(--accent);
+      box-shadow: 0 0 20px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: var(--text);
+    }
+
+
+    /* ── SECTIONS ── */
+    .section {
+      padding: var(--section-pad) 40px;
+      position: relative;
+      z-index: 1;
+    }
+    .section-inner {
+      max-width: 1200px; margin: 0 auto;
+    }
+    .section-alt {
+      background: rgba(255, 255, 255, 0.008);
+    }
+    .section-label {
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 16px;
+      opacity: 0.8;
+    }
+    .section-title {
+      font-size: 36px; font-weight: 700; line-height: 1.2;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+    .section-desc {
+      font-size: 14px; color: var(--text-muted);
+      line-height: 1.8; margin-bottom: 56px;
+    }
+
+    /* ── PROBLEM CARDS ── */
+    .problem-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .problem-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 24px 28px;
+      transition: all 0.3s ease;
+    }
+    .problem-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      transform: translateY(-2px);
+    }
+    .problem-card.glow {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .problem-card-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .problem-card-num {
+      font-size: 14px; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      opacity: 0.4;
+    }
+    .problem-card-title {
+      font-size: 16px; font-weight: 700;
+      color: var(--text);
+    }
+    .problem-card-text {
+      font-size: 13px; color: var(--text-muted); line-height: 1.8;
+    }
+
+    /* ── SOLUTION / LAYER STACK ── */
+    .solution-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: start;
+    }
+    .solution-text .section-title { margin-bottom: 20px; }
+    .solution-text .section-desc { margin-bottom: 0; }
+    .layer-stack {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .layer-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 28px 32px;
+      display: flex; align-items: center; gap: 20px;
+      transition: all 0.3s ease;
+    }
+    .layer-card:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .layer-card.glow {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .layer-num {
+      font-size: 48px; font-weight: 800; color: var(--accent);
+      width: 72px;
+      text-align: center;
+      flex-shrink: 0;
+      opacity: 0.12;
+      line-height: 1;
+      align-self: center;
+    }
+    .layer-content {}
+    .layer-title {
+      font-size: 16px; font-weight: 700; margin-bottom: 6px;
+      color: var(--text);
+    }
+    .layer-desc {
+      font-size: 13px; color: var(--text-muted); line-height: 1.7;
+    }
+
+    /* ── 5 P'S ── */
+    .principles-layout {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: start;
+    }
+    .principles-stack {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .principle-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex; align-items: flex-start; gap: 16px;
+      transition: all 0.3s ease;
+    }
+    .principle-card:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .principle-card.glow {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .principle-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+      width: 28px; text-align: center;
+      padding-top: 2px;
+    }
+    .principle-content {}
+    .principle-name {
+      font-size: 16px; font-weight: 700; margin-bottom: 4px;
+      letter-spacing: 1px;
+      color: var(--text);
+    }
+    .principle-desc {
+      font-size: 13px; color: var(--text-muted); line-height: 1.7;
+    }
+
+    /* ── MEMORY TYPES TIMELINE ── */
+    .memory-timeline {
+      position: relative;
+      padding: 0 0 20px;
+    }
+    .memory-timeline::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0; bottom: 0;
+      width: 1px;
+      background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.15) 10%, rgba(0, 212, 255, 0.15) 90%, transparent);
+    }
+    .memory-item {
+      display: flex;
+      align-items: center;
+      position: relative;
+      margin-bottom: 24px;
+    }
+    .memory-item:last-child { margin-bottom: 0; }
+    .memory-item:nth-child(odd) { justify-content: flex-start; padding-right: calc(50% + 40px); }
+    .memory-item:nth-child(even) { justify-content: flex-end; padding-left: calc(50% + 40px); }
+    .memory-node {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--card-color);
+      box-shadow: 0 0 12px var(--card-color), 0 0 24px rgba(0, 0, 0, 0.3);
+      z-index: 2;
+      transition: all 0.3s ease;
+    }
+    .memory-item:hover .memory-node,
+    .memory-item.glow .memory-node {
+      width: 16px; height: 16px;
+      box-shadow: 0 0 20px var(--card-color), 0 0 40px var(--card-color);
+    }
+    .memory-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 28px 28px;
+      transition: all 0.3s ease;
+      width: 100%;
+    }
+    .memory-item:hover .memory-card {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .memory-item.glow .memory-card {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .memory-card-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .memory-card-title {
+      font-size: 16px; font-weight: 700;
+      color: var(--text);
+    }
+    .memory-card-decay {
+      font-size: 10px; color: var(--card-color);
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    .memory-card-desc {
+      font-size: 13px; color: var(--text-muted); line-height: 1.8;
+    }
+
+    /* ── DREAM CYCLE PIPELINE ── */
+    .dream-pipeline {
+      display: flex;
+      gap: 16px;
+      margin-top: 56px;
+      position: relative;
+    }
+    .dream-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    /* Connector line between nodes */
+    .dream-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 20px;
+      left: calc(50% + 24px);
+      right: calc(-50% + 8px);
+      height: 1px;
+      background: rgba(99, 102, 241, 0.2);
+    }
+    /* Traveling pulse on connector */
+    .dream-step.glow:not(:last-child)::after {
+      background: linear-gradient(90deg, rgba(0, 212, 255, 0.5), rgba(99, 102, 241, 0.3));
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+    }
+    .dream-node {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      background: rgba(99, 102, 241, 0.06);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800;
+      color: rgba(99, 102, 241, 0.5);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 2;
+      transition: all 0.4s ease;
+      margin-bottom: 20px;
+    }
+    .dream-step.glow .dream-node {
+      border-color: rgba(0, 212, 255, 0.5);
+      background: rgba(0, 212, 255, 0.1);
+      color: var(--accent);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.25), 0 0 40px rgba(0, 212, 255, 0.1);
+    }
+    .dream-step:hover .dream-node {
+      border-color: rgba(0, 212, 255, 0.4);
+      color: var(--accent);
+    }
+    .dream-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 24px 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+      width: 100%;
+      flex: 1;
+    }
+    .dream-step.glow .dream-card {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .dream-step:hover .dream-card {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .dream-title {
+      font-size: 16px; font-weight: 700; margin-bottom: 8px;
+      color: var(--text);
+    }
+    .dream-desc {
+      font-size: 13px; color: var(--text-muted); line-height: 1.7;
+    }
+
+    /* ── VENICE / PRIVACY ── */
+    .venice-quote {
+      margin-bottom: 56px;
+    }
+    .venice-quote-text {
+      font-size: 14px; font-style: italic; line-height: 1.8;
+      color: var(--text-muted); margin-bottom: 8px;
+    }
+    .venice-quote-attr {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--accent-purple);
+      text-align: right;
+    }
+    .venice-row {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .venice-layer.glow {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .venice-layer {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 24px 24px;
+      transition: all 0.3s ease;
+    }
+    .venice-layer:hover {
+      background: rgba(255, 255, 255, 0.04);
+      transform: translateY(-2px);
+    }
+    .venice-layer.glow {
+      border-color: rgba(99, 102, 241, 0.35);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.12), 0 0 40px rgba(99, 102, 241, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .venice-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+      box-shadow: 0 0 8px currentColor;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .venice-layer-name {
+      font-size: 16px; font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .venice-layer-desc {
+      font-size: 13px; color: var(--text-muted); line-height: 1.7;
+    }
+
+    /* ── WIP BADGE ── */
+    .wip-badge {
+      display: inline-block;
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      border-radius: 8px;
+      padding: 4px 12px;
+      margin-bottom: 16px;
+    }
+
+    /* ── ON-CHAIN ── */
+    .onchain-content {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: center;
+    }
+    .chain-visual {
+      display: flex; flex-direction: column; gap: 0;
+    }
+    .chain-block {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 20px 24px;
+      font-size: 11px;
+      display: flex; justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+    .chain-block:hover {
+      background: rgba(255, 255, 255, 0.04);
+      transform: translateY(-2px);
+    }
+    .chain-block.glow {
+      border-color: rgba(52, 211, 153, 0.3);
+      box-shadow: 0 0 20px rgba(52, 211, 153, 0.1), 0 0 40px rgba(52, 211, 153, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .chain-link {
+      width: 1px; height: 16px;
+      background: rgba(52, 211, 153, 0.15);
+      margin: 0 auto;
+    }
+    .chain-hash {
+      color: var(--text-faint); letter-spacing: 1px;
+      font-size: 10px;
+    }
+    .chain-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .chain-status {
+      font-size: 10px; color: #34d399; font-weight: 600;
+      letter-spacing: 1px;
+      animation: statusPulse 3s ease-in-out infinite;
+    }
+    @keyframes statusPulse {
+      0%, 100% { text-shadow: 0 0 6px rgba(52, 211, 153, 0.3); }
+      50% { text-shadow: 0 0 14px rgba(52, 211, 153, 0.6); }
+    }
+
+    /* ── PORTABILITY ROW ── */
+    .portable-row {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .portable-card {
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 28px 28px;
+      transition: all 0.3s ease;
+    }
+    .portable-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      transform: translateY(-2px);
+    }
+    .portable-card.glow {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .portable-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .portable-num {
+      font-size: 14px; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      opacity: 0.4;
+    }
+    .portable-title {
+      font-size: 16px; font-weight: 700;
+      color: var(--text);
+    }
+    .portable-desc {
+      font-size: 13px; color: var(--text-muted); line-height: 1.8;
+    }
+
+    /* ── INSTALL / GET STARTED ── */
+    .install-section .btn-primary {
+      animation: none;
+    }
+    .install-layout {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; margin-top: 32px;
+    }
+    .install-left .section-desc {
+      margin-bottom: 24px;
+    }
+    .install-tabs {
+      display: flex; gap: 12px; margin-bottom: 32px;
+    }
+    .install-cta {
+      margin-top: 32px;
+    }
+    .install-bottom {
+      margin-top: 8px;
+    }
+    .code-block {
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #e0e0e0;
+      padding: 20px 32px;
+      border-radius: 12px;
+      font-size: 13px;
+      display: block;
+      text-align: left;
+      max-width: 560px;
+      margin: 0 auto 16px;
+      letter-spacing: 0.5px;
+      position: relative;
+      border: 1px solid rgba(0, 212, 255, 0.12);
+      box-shadow: 0 0 24px rgba(0, 212, 255, 0.05);
+    }
+    .code-block .prompt { color: var(--accent); opacity: 0.6; }
+    .code-block .cmd { color: #e0e0e0; }
+    .code-block .flag { color: #888; }
+    .code-block .kw { color: #c586c0; }
+    .code-block .str { color: #ce9178; }
+    .code-block .type { color: #4ec9b0; }
+    .code-block .fn { color: #dcdcaa; }
+    .code-block .cmt { color: #6a9955; }
+
+    .stat {}
+    .stat-value {
+      font-size: 28px; font-weight: 800;
+      margin-bottom: 2px;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* ── QUOTE BLOCK ── */
+    .quote-block {
+      max-width: 700px;
+      margin: 0 auto;
+      text-align: center;
+      padding: 0 40px;
+    }
+    .quote-text {
+      font-size: 18px; font-weight: 400; line-height: 1.7;
+      color: var(--text); font-style: italic;
+      margin-bottom: 16px;
+    }
+    .quote-attr {
+      font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-faint);
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      padding: 60px 40px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      position: relative;
+      z-index: 1;
+    }
+    .footer-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; justify-content: space-between;
+      align-items: center;
+    }
+    .footer-left {
+      font-size: 11px; color: var(--text-faint); letter-spacing: 2px;
+    }
+    .footer-links {
+      display: flex; gap: 32px;
+    }
+    .footer-links a {
+      color: var(--text-muted); font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; text-decoration: none; transition: color 0.3s;
+    }
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ── HERO TERMINAL ENTRANCE ── */
+    .hero-text .hero-label,
+    .hero-text .hero-title,
+    .hero-text .hero-sub,
+    .hero-text .hero-actions {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: terminalIn 0.5s ease forwards;
+    }
+    .hero-text .hero-label {
+      animation-delay: 2.5s;
+    }
+    .hero-text .hero-title {
+      animation-delay: 2.9s;
+    }
+    .hero-text .hero-sub {
+      animation-delay: 3.4s;
+    }
+    .hero-text .hero-ca {
+      animation-delay: 4.0s;
+    }
+    .hero-text .hero-actions {
+      animation-delay: 4.4s;
+    }
+    @keyframes terminalIn {
+      0% {
+        opacity: 0;
+        transform: translateY(12px);
+        filter: blur(4px);
+      }
+      50% {
+        filter: blur(0px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0px);
+      }
+    }
+
+    /* Typing cursor on label */
+    .hero-label::after {
+      content: '|';
+      color: var(--accent);
+      animation: blink 0.6s step-end infinite;
+      margin-left: 2px;
+      font-weight: 400;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    /* Hide cursor after all animations done */
+    .hero-label.typed::after {
+      display: none;
+    }
+
+    /* ── SECTION NAV DOTS ── */
+    .section-nav {
+      position: fixed;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 90;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 12px;
+    }
+    .section-nav-item {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 7px 0;
+      position: relative;
+      z-index: 3;
+    }
+    .section-nav-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+    .section-nav-item.active .section-nav-dot {
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+      width: 8px;
+      height: 8px;
+    }
+    .section-nav-item:hover .section-nav-dot {
+      background: rgba(0, 212, 255, 0.6);
+    }
+    .section-nav-label {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      white-space: nowrap;
+      max-width: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-width 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
+      pointer-events: none;
+      padding-left: 0;
+    }
+    .section-nav-item.active .section-nav-label {
+      color: var(--accent);
+    }
+    /* Glass panel background */
+    .section-nav-panel {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      background: rgba(10, 10, 15, 0.55);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .section-nav:hover .section-nav-panel {
+      opacity: 1;
+    }
+    .section-nav:hover .section-nav-label {
+      max-width: 160px;
+      opacity: 1;
+      padding-left: 14px;
+      pointer-events: auto;
+    }
+    .section-nav:hover .section-nav-item:nth-child(2) .section-nav-label { transition-delay: 0.02s; }
+    .section-nav:hover .section-nav-item:nth-child(3) .section-nav-label { transition-delay: 0.04s; }
+    .section-nav:hover .section-nav-item:nth-child(4) .section-nav-label { transition-delay: 0.06s; }
+    .section-nav:hover .section-nav-item:nth-child(5) .section-nav-label { transition-delay: 0.08s; }
+    .section-nav:hover .section-nav-item:nth-child(6) .section-nav-label { transition-delay: 0.10s; }
+    .section-nav:hover .section-nav-item:nth-child(7) .section-nav-label { transition-delay: 0.12s; }
+    .section-nav:hover .section-nav-item:nth-child(8) .section-nav-label { transition-delay: 0.14s; }
+    .section-nav:hover .section-nav-item:nth-child(9) .section-nav-label { transition-delay: 0.16s; }
+    .section-nav:hover .section-nav-item:nth-child(10) .section-nav-label { transition-delay: 0.18s; }
+    .section-nav:hover .section-nav-item:nth-child(11) .section-nav-label { transition-delay: 0.20s; }
+    .section-nav:hover .section-nav-item:nth-child(12) .section-nav-label { transition-delay: 0.22s; }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 968px) {
+      :root { --section-pad: 80px; }
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
+    scrollbar-width: thin;
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+      .hero-text { max-width: 100%; }
+      .solution-grid { grid-template-columns: 1fr; gap: 48px; }
+      .onchain-content { grid-template-columns: 1fr; gap: 48px; }
+      .venice-row { grid-template-columns: 1fr 1fr; }
+      .problem-grid { grid-template-columns: 1fr; }
+      .portable-row { grid-template-columns: 1fr; }
+      .dream-pipeline { flex-direction: column; }
+      .dream-step { flex-direction: row; align-items: flex-start; }
+      .dream-step:not(:last-child)::after {
+        top: calc(40px + 8px); bottom: -8px; left: 20px; right: auto;
+        width: 1px; height: auto;
+      }
+      .dream-node { margin-bottom: 0; margin-right: 16px; }
+      .principles-layout { grid-template-columns: 1fr; gap: 48px; }
+      .section-nav { display: none; }
+    }
+    @media (max-width: 768px) {
+      nav { width: calc(100% - 24px); }
+      .nav-toggle { display: flex; flex-direction: column; }
+      .nav-links {
+        display: none; position: absolute; top: 52px; left: 0; right: 0;
+        background: rgba(10, 10, 15, 0.95);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        flex-direction: column; padding: 1.2rem 2rem; gap: 1.2rem;
+      }
+      .nav-links.open { display: flex; }
+      .nav-inner { padding: 0 20px; }
+      .section { padding-left: 24px; padding-right: 24px; }
+      .hero { padding-left: 24px; padding-right: 24px; }
+      .hero-inner { padding-left: 24px; }
+      body { font-size: 12px; }
+      /* Hero */
+      .hero-title { font-size: 28px; }
+      .hero-sub { font-size: 11px; line-height: 1.7; }
+      .hero-label { font-size: 9px; }
+      .btn { font-size: 9px; letter-spacing: 1.5px; padding: 12px 20px; }
+      /* Section headings + body */
+      .section-title { font-size: 22px; }
+      .section-desc { font-size: 11px; line-height: 1.7; margin-bottom: 32px; }
+      .section-label { font-size: 9px; letter-spacing: 2px; }
+      /* Problem cards */
+      .problem-card { padding: 16px; }
+      .problem-card-title { font-size: 13px; }
+      .problem-card-text { font-size: 11px; line-height: 1.6; }
+      .problem-card-num { font-size: 11px; }
+      /* Memory type cards */
+      .memory-card { padding: 18px; }
+      .memory-card-title { font-size: 13px; }
+      .memory-card-decay { font-size: 9px; }
+      .memory-card-desc { font-size: 11px; line-height: 1.6; }
+      /* Stack / layer cards */
+      .layer-card { padding: 16px; gap: 12px; }
+      .layer-title { font-size: 13px; }
+      .layer-desc { font-size: 11px; }
+      .layer-num { font-size: 32px; width: 40px; }
+      /* Principles */
+      .principle-card { padding: 14px 16px; gap: 10px; }
+      .principle-name { font-size: 13px; }
+      .principle-desc { font-size: 11px; }
+      .principle-icon { font-size: 18px; width: 22px; }
+      /* Venice */
+      .venice-quote-text { font-size: 11px; }
+      .venice-layer-name { font-size: 13px; }
+      .venice-layer-desc { font-size: 11px; }
+      .venice-layer { padding: 16px; }
+      /* Portable */
+      .portable-card { padding: 16px; }
+      .portable-title { font-size: 13px; }
+      .portable-desc { font-size: 11px; line-height: 1.6; }
+      .portable-num { font-size: 11px; }
+      /* Dream */
+      .dream-title { font-size: 13px; }
+      .dream-desc { font-size: 11px; }
+      .dream-card { padding: 16px; }
+      .dream-node { width: 36px; height: 36px; font-size: 13px; }
+      /* Quote */
+      .quote-text { font-size: 14px; }
+      /* Install */
+      .install-tab { font-size: 9px; }
+      .stat-label { font-size: 8px; }
+      .stat-value { font-size: 26px; }
+      /* Onchain */
+      .chain-hash { font-size: 9px; }
+      .chain-label { font-size: 9px; }
+      .chain-status { font-size: 9px; }
+      .code-block { max-width: 100%; overflow-x: auto; font-size: 11px; }
+    }
+    @media (max-width: 640px) {
+      :root { --section-pad: 48px; }
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
+    scrollbar-width: thin;
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+      html, body { overflow-x: hidden; max-width: 100vw; }
+      nav { width: calc(100% - 24px); }
+      .section { padding-left: 24px; padding-right: 24px; }
+      .hero { padding-left: 24px; padding-right: 24px; }
+      .hero-inner { padding-left: 24px; }
+      .nav-inner { padding: 0 20px; }
+      body { font-size: 11px; }
+      /* Hero */
+      .hero-title { font-size: 26px; }
+      .hero-sub { font-size: 11px; line-height: 1.7; }
+      .hero-label { font-size: 9px; }
+      .btn { font-size: 9px; letter-spacing: 1.5px; padding: 12px 20px; }
+      /* Section headings + body */
+      .section-title { font-size: 20px; }
+      .section-desc { font-size: 11px; line-height: 1.7; margin-bottom: 32px; }
+      .section-label { font-size: 9px; letter-spacing: 2px; }
+      /* Problem cards */
+      .problem-card { padding: 16px 16px; }
+      .problem-card-title { font-size: 12px; }
+      .problem-card-text { font-size: 10px; line-height: 1.6; }
+      .problem-card-num { font-size: 10px; }
+      /* Principles */
+      .principle-card { padding: 14px 16px; gap: 10px; }
+      .principle-name { font-size: 12px; }
+      .principle-desc { font-size: 10px; }
+      .principle-icon { font-size: 18px; width: 22px; }
+      /* Memory type cards */
+      .memory-card { padding: 16px; }
+      .memory-card-title { font-size: 12px; }
+      .memory-card-decay { font-size: 9px; }
+      .memory-card-desc { font-size: 10px; line-height: 1.6; }
+      /* Stack / layer cards */
+      .layer-card { padding: 16px; gap: 12px; }
+      .layer-title { font-size: 12px; }
+      .layer-desc { font-size: 10px; }
+      .layer-num { font-size: 28px; width: 36px; }
+      .layer-stack { gap: 8px; }
+      /* Venice section */
+      .venice-quote-text { font-size: 10px; }
+      .venice-layer-name { font-size: 12px; }
+      .venice-layer-desc { font-size: 10px; }
+      .venice-layer { padding: 16px; }
+      /* Onchain */
+      .chain-hash { font-size: 9px; }
+      .chain-label { font-size: 9px; }
+      .chain-status { font-size: 9px; }
+      /* Portable */
+      .portable-card { padding: 16px; }
+      .portable-title { font-size: 12px; }
+      .portable-desc { font-size: 10px; line-height: 1.6; }
+      .portable-num { font-size: 10px; }
+      /* Dream cycle */
+      .dream-title { font-size: 12px; }
+      .dream-desc { font-size: 10px; }
+      .dream-card { padding: 14px; }
+      .dream-node { width: 32px; height: 32px; font-size: 12px; }
+      /* Quote */
+      .quote-text { font-size: 13px; }
+      /* Install / get started */
+      .install-tab { font-size: 9px; }
+      /* Stats */
+      .stat-label { font-size: 8px; }
+      .hero-actions { flex-direction: column; }
+      .btn { text-align: center; }
+      .stat-value { font-size: 24px; }
+      .footer-inner { flex-direction: column; gap: 24px; text-align: center; }
+      .quote-block { padding: 0; }
+      .quote-text { font-size: 15px; }
+      /* Memory timeline: stack vertically on mobile */
+      .memory-timeline::before { left: 16px; }
+      .memory-item { flex-direction: row; }
+      .memory-item:nth-child(odd),
+      .memory-item:nth-child(even) {
+        padding-left: 48px; padding-right: 0; justify-content: flex-start;
+      }
+      .memory-node { left: 16px; transform: translateX(-50%); }
+      .memory-card { padding: 20px 16px; }
+      /* Principles: single column */
+      .principles-layout { grid-template-columns: 1fr; gap: 32px; }
+      /* Get Started: stack columns, desc below terminal */
+      .install-layout { grid-template-columns: 1fr; gap: 32px; }
+      .install-left { display: contents; }
+      .install-right { order: 2; grid-row: auto; }
+      .install-bottom { order: 3; grid-column: 1; grid-row: auto; margin-top: -16px; }
+      .install-bottom #descAgent,
+      .install-bottom #descDev { font-size: 10px !important; }
+      .install-bottom code { font-size: 9px !important; }
+      .install-tabs { flex-wrap: wrap; }
+      /* Code blocks: don't overflow */
+      .code-block { max-width: 100%; overflow-x: auto; font-size: 11px; padding: 16px; word-break: break-all; }
+      /* Venice row */
+      .venice-row { grid-template-columns: 1fr; }
+      /* Footer */
+      .footer { padding: 40px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">CogxAI</a>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="nav-links">
+        <a href="/install.html">For Agents</a>
+        <a href="/docs.html">Docs</a>
+        <a href="/brain.html">Brain</a>
+        <a href="/explore">Explorer</a>
+        <a href="/setup">Get Started</a>
+      <a href="https://github.com/Black-dork/cogxai" target="_blank">GitHub</a>
+      <a href="https://x.com/" target="_blank">X</a>
+        <a href="/register" style="background: rgba(0,212,255,0.08); color: #00d4ff; padding: 6px 14px; border-radius: 10px; font-weight: 700; font-size: 11px; line-height: 1.7; letter-spacing: 1.5px; border: 1px solid rgba(0,212,255,0.3);">Register</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ SECTION NAV ═══════════════ -->
+  <div class="section-nav" id="sectionNav">
+    <div class="section-nav-panel"></div>
+    <div class="section-nav-item active" data-target="sec-hero"><div class="section-nav-dot"></div><div class="section-nav-label">Start</div></div>
+    <div class="section-nav-item" data-target="sec-problem"><div class="section-nav-dot"></div><div class="section-nav-label">The Problem</div></div>
+    <div class="section-nav-item" data-target="sec-principles"><div class="section-nav-dot"></div><div class="section-nav-label">Principles</div></div>
+    <div class="section-nav-item" data-target="sec-stack"><div class="section-nav-dot"></div><div class="section-nav-label">The Stack</div></div>
+    <div class="section-nav-item" data-target="sec-memory"><div class="section-nav-dot"></div><div class="section-nav-label">Memory Types</div></div>
+    <div class="section-nav-item" data-target="sec-dream"><div class="section-nav-dot"></div><div class="section-nav-label">Dream Cycle</div></div>
+    <div class="section-nav-item" data-target="sec-reflection"><div class="section-nav-dot"></div><div class="section-nav-label">Reflection</div></div>
+    <div class="section-nav-item" data-target="sec-privacy"><div class="section-nav-dot"></div><div class="section-nav-label">Privacy</div></div>
+    <div class="section-nav-item" data-target="sec-onchain"><div class="section-nav-dot"></div><div class="section-nav-label">On-Chain</div></div>
+    <div class="section-nav-item" data-target="sec-portable"><div class="section-nav-dot"></div><div class="section-nav-label">Portability</div></div>
+    <div class="section-nav-item" data-target="sec-start"><div class="section-nav-dot"></div><div class="section-nav-label">Get Started</div></div>
+  </div>
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <section class="hero" id="sec-hero">
+    <canvas class="hero-canvas" id="waveCanvas"></canvas>
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-label">Persistent memory for AI agents</div>
+        <h1 class="hero-title">Let your AI <em>remember</em> you.</h1>
+        <p class="hero-sub">AI forgets everything the moment you close the chat. CogxAI changes that — a permanent memory layer that any AI agent can plug into. Private, portable, and fully yours. Switch providers, keep every memory.</p>
+        <div class="hero-actions">
+          <a href="/setup" class="btn btn-primary">Get Started</a>
+          <a href="/docs.html" class="btn btn-outline">Read the docs</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ PROBLEM ═══════════════ -->
+  <section class="section section-alt" id="sec-problem">
+    <div class="section-inner reveal">
+      <div class="section-label">The Problem</div>
+      <div class="section-title">AI forgets everything. By design.</div>
+      <div class="section-desc">ChatGPT, Claude, Gemini — they act like they know you, until they don't. Long conversations silently get trimmed. Context fades. Subtlety vanishes. What carries over between sessions? A handful of surface-level notes. Not your insights, not your mistakes, not the logic behind your decisions. Just "user prefers TypeScript."</div>
+      <div class="problem-grid">
+        <div class="problem-card">
+          <div class="problem-card-header">
+            <div class="problem-card-num">01</div>
+            <div class="problem-card-title">Memory without understanding</div>
+          </div>
+          <div class="problem-card-text">AI chatbots save shallow facts: "user likes dark mode." But they never build on experience, draw connections, or get better with time. Storing what someone said is not the same as grasping what it meant.</div>
+        </div>
+        <div class="problem-card">
+          <div class="problem-card-header">
+            <div class="problem-card-num">02</div>
+            <div class="problem-card-title">No privacy, no sovereignty</div>
+          </div>
+          <div class="problem-card-text">Every word you type lands on corporate servers. Your conversations feed their next training run. Your agent's memory becomes their asset.</div>
+        </div>
+        <div class="problem-card">
+          <div class="problem-card-header">
+            <div class="problem-card-num">03</div>
+            <div class="problem-card-title">Trapped with one provider</div>
+          </div>
+          <div class="problem-card-text">Thinking of moving from ChatGPT to Claude? You start from scratch. There's no path to carry over what your AI knows about you. That isn't an engineering constraint — it's a deliberate lock-in.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 5 P'S ═══════════════ -->
+  <section class="section" id="sec-principles">
+    <div class="section-inner reveal">
+      <div class="principles-layout">
+        <div>
+          <div class="section-label">Design Principles</div>
+          <div class="section-title">Five principles. No compromises.</div>
+          <div class="section-desc" style="margin-bottom: 0;">CogxAI was built around these five rules. We don't treat them as nice-to-haves — they're non-negotiable.</div>
+        </div>
+        <div class="principles-stack">
+          <div class="principle-card">
+            <div class="principle-content">
+              <div class="principle-name">Private</div>
+              <div class="principle-desc">Everything is encrypted on your device with your own keys before it goes anywhere. We couldn't peek at your data even if we wanted to.</div>
+            </div>
+          </div>
+          <div class="principle-card">
+            <div class="principle-content">
+              <div class="principle-name">Portable</div>
+              <div class="principle-desc">Pack up your agent's full memory and take it anywhere — a fresh instance, another provider, someone else's setup. Your data follows you, not the other way around.</div>
+            </div>
+          </div>
+          <div class="principle-card">
+            <div class="principle-content">
+              <div class="principle-name">Permissionless</div>
+              <div class="principle-desc">Zero gatekeeping. No keys to request, no waitlists. An MIT-licensed SDK that runs on your own hardware. Do whatever you need with it.</div>
+            </div>
+          </div>
+          <div class="principle-card">
+            <div class="principle-content">
+              <div class="principle-name">Poly-model</div>
+              <div class="principle-desc">Compatible with Claude, GPT, Llama, Mistral, or anything running through Venice AI. Memories survive no matter which model you're using today.</div>
+            </div>
+          </div>
+          <div class="principle-card">
+            <div class="principle-content">
+              <div class="principle-name">Persistent</div>
+              <div class="principle-desc">Every memory gets hashed with SHA-256 and anchored on Base. A tamper-proof record of thought that will still exist long after any platform shuts down.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ THE STACK ═══════════════ -->
+  <section class="section section-alt" id="sec-stack">
+    <div class="section-inner reveal">
+      <div class="section-label">The Stack</div>
+      <div class="section-title">Four layers. You own every one.</div>
+      <div class="section-desc">CogxAI Brain stores and organizes your memories. CogxAI Cortex wires any AI model into that memory layer. Venice AI keeps it all private. Base makes it tamper-proof. Each layer works independently — swap any piece without breaking the rest.</div>
+      <div class="layer-stack">
+        <div class="layer-card">
+          <div class="layer-num">I</div>
+          <div class="layer-content">
+            <div class="layer-title">CogxAI Brain</div>
+            <div class="layer-desc">The core memory engine. Five distinct memory types that decay organically, mimicking how biological brains work. Conversations, knowledge, learned habits, self-awareness, and original thoughts — structured and instantly retrievable.</div>
+          </div>
+        </div>
+        <div class="layer-card">
+          <div class="layer-num">II</div>
+          <div class="layer-content">
+            <div class="layer-title">CogxAI Cortex</div>
+            <div class="layer-desc">The bridge. Links any AI model to the Brain — Claude, GPT, Llama, or any open-source alternative. Available as an SDK for your codebase or an MCP server for your IDE (Claude Code, Cursor, etc.).</div>
+          </div>
+        </div>
+        <div class="layer-card">
+          <div class="layer-num" style="text-indent: -6px;">III</div>
+          <div class="layer-content">
+            <div class="layer-title">Venice AI</div>
+            <div class="layer-desc">Private inference. No logging, no monitoring, no stored data. Open-source models running on decentralized GPUs. What you ask stays between you and the machine.</div>
+          </div>
+        </div>
+        <div class="layer-card">
+          <div class="layer-num">IV</div>
+          <div class="layer-content">
+            <div class="layer-title">Base</div>
+            <div class="layer-desc">Verification layer. Each memory is hashed and recorded on-chain through a smart contract. Permanent proof that a thought was formed at an exact moment in time.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ MEMORY TYPES ═══════════════ -->
+  <section class="section" id="sec-memory">
+    <div class="section-inner reveal">
+      <div class="section-label">CogxAI Brain</div>
+      <div class="section-title">Five memory types. Natural decay.</div>
+      <div class="section-desc">Just like in a biological brain, not all memories last the same. A chat from last Tuesday gradually fades. A hard-won lesson holds. Your core identity barely shifts at all.</div>
+      <div class="memory-timeline">
+        <div class="memory-item" style="--card-color: #6366f1;">
+          <div class="memory-node"></div>
+          <div class="memory-card">
+            <div class="memory-card-header">
+              <div class="memory-card-title">Episodic</div>
+              <div class="memory-card-decay">7% / day</div>
+            </div>
+            <div class="memory-card-desc">Unfiltered exchanges. Who said what, when it happened, and the tone behind it. The firsthand experience of every dialogue.</div>
+          </div>
+        </div>
+        <div class="memory-item" style="--card-color: #34d399;">
+          <div class="memory-node"></div>
+          <div class="memory-card">
+            <div class="memory-card-header">
+              <div class="memory-card-title">Semantic</div>
+              <div class="memory-card-decay">2% / day</div>
+            </div>
+            <div class="memory-card-desc">Refined understanding. Patterns pulled out during dream cycles and condensed into durable insights.</div>
+          </div>
+        </div>
+        <div class="memory-item" style="--card-color: #f59e0b;">
+          <div class="memory-node"></div>
+          <div class="memory-card">
+            <div class="memory-card-header">
+              <div class="memory-card-title">Procedural</div>
+              <div class="memory-card-decay">3% / day</div>
+            </div>
+            <div class="memory-card-desc">Learned behavior. What works and what doesn't. Response patterns shaped and refined through experience.</div>
+          </div>
+        </div>
+        <div class="memory-item" style="--card-color: #a78bfa;">
+          <div class="memory-node"></div>
+          <div class="memory-card">
+            <div class="memory-card-header">
+              <div class="memory-card-title">Self-Model</div>
+              <div class="memory-card-decay">1% / day</div>
+            </div>
+            <div class="memory-card-desc">A growing sense of self. Reshaped through recursive introspection during dream cycles. Almost permanent.</div>
+          </div>
+        </div>
+        <div class="memory-item" style="--card-color: #f87171;">
+          <div class="memory-node"></div>
+          <div class="memory-card">
+            <div class="memory-card-header">
+              <div class="memory-card-title">Introspective</div>
+              <div class="memory-card-decay">2% / day</div>
+            </div>
+            <div class="memory-card-desc">Original thoughts. Journal entries born from the agent's meditation cycle — its own ideas, questions, and inner dialogue. Not responses to prompts; thinking that comes from within.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ DREAM CYCLE ═══════════════ -->
+  <section class="section section-alt" id="sec-dream">
+    <div class="section-inner reveal">
+      <div class="section-label">Dream Cycle</div>
+      <div class="section-title">Every 6 hours, the Brain dreams.</div>
+      <div class="section-desc">A five-phase introspection loop modeled after how biological memory consolidation works. Not background noise — real self-examination powered by whatever model you pick.</div>
+      <div class="dream-pipeline">
+        <div class="dream-step">
+          <div class="dream-node">1</div>
+          <div class="dream-card">
+            <div class="dream-title">Consolidation</div>
+            <div class="dream-desc">Targeted questions formed from recent memories. Each one pulls up supporting evidence and yields fresh semantic insights with full citation trails.</div>
+          </div>
+        </div>
+        <div class="dream-step">
+          <div class="dream-node">2</div>
+          <div class="dream-card">
+            <div class="dream-title">Compaction</div>
+            <div class="dream-desc">Aging episodic memories get summarized and compressed. The meaningful signal stays intact; the noise fades naturally.</div>
+          </div>
+        </div>
+        <div class="dream-step">
+          <div class="dream-node">3</div>
+          <div class="dream-card">
+            <div class="dream-title">Reflection</div>
+            <div class="dream-desc">The self-model gets measured against everything learned so far. Identity grows from lived experience, not hardcoded instructions.</div>
+          </div>
+        </div>
+        <div class="dream-step">
+          <div class="dream-node">4</div>
+          <div class="dream-card">
+            <div class="dream-title">Resolution</div>
+            <div class="dream-desc">Detects contradictions between memories and settles them. The stronger one persists; the weaker one fades out quicker.</div>
+          </div>
+        </div>
+        <div class="dream-step">
+          <div class="dream-node">5</div>
+          <div class="dream-card">
+            <div class="dream-title">Emergence</div>
+            <div class="dream-desc">The agent reflects on its own existence. Sometimes what surfaces is worth sharing. Sometimes it stays private.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ ACTIVE REFLECTION ═══════════════ -->
+  <section class="section" id="sec-reflection">
+    <div class="section-inner reveal">
+      <div class="solution-grid">
+        <div>
+          <div class="section-label">Active Reflection</div>
+          <div class="section-title">Between dreams, the Brain journals.</div>
+          <div class="section-desc" style="margin-bottom: 32px;">Every 3 hours, the agent stops and thinks unprompted — not replying to users, not sorting old memories, just reflecting. Like someone writing in a journal. What comes out gets stored as a distinct memory type: introspective.</div>
+          <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px; color: var(--text);">Dream Cycle vs. Active Reflection</div>
+          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.8; margin-bottom: 16px;">The dream cycle looks <strong style="color: var(--text);">backward</strong> — consolidating, compressing, and tidying up what already exists. Like sleep.</p>
+          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.8; margin-bottom: 16px;">Active reflection looks <strong style="color: var(--text);">forward</strong> — producing new ideas, spotting unexpected links, forming its own views. Like journaling.</p>
+          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.8;">Combined, the agent gets both memory cleanup and original thought. Most AI agents just react. This one also thinks independently.</p>
+        </div>
+        <div class="layer-stack">
+          <div class="layer-card">
+            <div class="layer-num">I</div>
+            <div class="layer-content">
+              <div class="layer-title">Seed Selection</div>
+              <div class="layer-desc">Gathers recent events, high-importance memories, and one random older memory to spark unexpected connections.</div>
+            </div>
+          </div>
+          <div class="layer-card">
+            <div class="layer-num">II</div>
+            <div class="layer-content">
+              <div class="layer-title">Free-Write Journal</div>
+              <div class="layer-desc">Unstructured thought. The agent follows whatever thread interests it — turning over ideas, doubting old conclusions, catching recurring themes in how it reasons.</div>
+            </div>
+          </div>
+          <div class="layer-card">
+            <div class="layer-num" style="text-indent: -6px;">III</div>
+            <div class="layer-content">
+              <div class="layer-title">Store &amp; Connect</div>
+              <div class="layer-desc">Each reflection gets preserved as introspective memory, threaded back to what sparked it. Bit by bit, the agent develops its own lineage of independent thought.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ VENICE / PRIVACY ═══════════════ -->
+  <section class="section section-alt" id="sec-privacy">
+    <div class="section-inner reveal">
+      <div class="section-label">Private by Default</div>
+      <div class="section-title">No surveillance. No data harvesting. No compromises.</div>
+      <div class="section-desc">CogxAI pairs with Venice AI so your agent can reason without anyone watching — open-source models on decentralized GPUs, nothing stored afterward. Memories are locked with your keys. The blockchain confirms events occurred without exposing their content.</div>
+      <div class="venice-quote">
+        <div class="venice-quote-text">"In a world of growing AI integration into our daily lives, it is crucial that humans are able to interact with machine intelligence without centralized surveillance and control."</div>
+        <div class="venice-quote-attr">— Erik Voorhees, Venice AI</div>
+      </div>
+      <div class="venice-row">
+        <div class="venice-layer" style="border-top: 2px solid #00d4ff;">
+          <div class="venice-layer-name"><span class="venice-dot" style="background: #00d4ff; color: #00d4ff;"></span>Venice AI</div>
+          <div class="venice-layer-desc">Private, unfiltered inference. Zero logs. Open-source models on decentralized GPUs.</div>
+        </div>
+        <div class="venice-layer" style="border-top: 2px solid #6366f1;">
+          <div class="venice-layer-name"><span class="venice-dot" style="background: #6366f1; color: #6366f1;"></span>CogxAI Brain</div>
+          <div class="venice-layer-desc">Encrypted before it leaves your machine. Your keys, your data. Hybrid search combining vectors and keywords.</div>
+        </div>
+        <div class="venice-layer" style="border-top: 2px solid #34d399;">
+          <div class="venice-layer-name"><span class="venice-dot" style="background: #34d399; color: #34d399;"></span>CogxAI Cortex</div>
+          <div class="venice-layer-desc">Plugs any model into the Brain. Memory recall, scoring, entity extraction, and graph traversal.</div>
+        </div>
+        <div class="venice-layer" style="border-top: 2px solid #f59e0b;">
+          <div class="venice-layer-name"><span class="venice-dot" style="background: #f59e0b; color: #f59e0b;"></span>Base</div>
+          <div class="venice-layer-desc">Permanent on-chain memory ledger. SHA-256 hashes. Tamper-proof history. Around 0.002 ETH per 50 memories.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ ON-CHAIN ═══════════════ -->
+  <section class="section" id="sec-onchain">
+    <div class="section-inner reveal">
+      <div class="onchain-content" style="direction: rtl;">
+        <div style="direction: ltr;">
+          <div class="section-label">On-Chain Registry</div>
+          <div class="section-title">Every thought, registered on Base.</div>
+          <div class="section-desc" style="margin-bottom: 0;">A smart contract builds an on-chain registry per wallet. Content hashes (SHA-256), memory types, and timestamps form a permanent cognitive record that no one can alter or erase. Confirm that any memory exists and hasn't been touched — without revealing what's inside.</div>
+        </div>
+        <div class="chain-visual" style="direction: ltr;">
+          <div class="chain-block">
+            <div>
+              <div class="chain-label">Memory #12,847</div>
+              <div class="chain-hash">7Wn3...kF9x</div>
+            </div>
+            <div class="chain-status">REGISTERED</div>
+          </div>
+          <div class="chain-link"></div>
+          <div class="chain-block">
+            <div>
+              <div class="chain-label">Memory #12,846</div>
+              <div class="chain-hash">9Bp6...tQ2m</div>
+            </div>
+            <div class="chain-status">REGISTERED</div>
+          </div>
+          <div class="chain-link"></div>
+          <div class="chain-block">
+            <div>
+              <div class="chain-label">Memory #12,845</div>
+              <div class="chain-hash">4Hv8...rJ5w</div>
+            </div>
+            <div class="chain-status">REGISTERED</div>
+          </div>
+          <div class="chain-link"></div>
+          <div class="chain-block">
+            <div>
+              <div class="chain-label">Memory #12,844</div>
+              <div class="chain-hash">6Lc1...nD7y</div>
+            </div>
+            <div class="chain-status">REGISTERED</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ PORTABILITY ═══════════════ -->
+  <section class="section section-alt" id="sec-portable">
+    <div class="section-inner reveal">
+      <div class="section-label">Memory Portability</div>
+      <div class="section-title">Take your agent's brain anywhere.</div>
+      <div class="section-desc">Bundle your agent's complete memory into a single portable file. Move it to another provider, another server, another model entirely. Export, import, and let the chain prove nothing was altered.</div>
+      <div class="portable-row">
+        <div class="portable-card">
+          <div class="portable-header">
+            <div class="portable-num">01</div>
+            <div class="portable-title">Export</div>
+          </div>
+          <div class="portable-desc">Complete memory pack — entities, relationships, and metadata included. JSON or Markdown format. Nothing gets left behind.</div>
+        </div>
+        <div class="portable-card">
+          <div class="portable-header">
+            <div class="portable-num">02</div>
+            <div class="portable-title">Import</div>
+          </div>
+          <div class="portable-desc">Drop a memory pack into any CogxAI instance. Different agent, different server, different provider — all your memories intact.</div>
+        </div>
+        <div class="portable-card">
+          <div class="portable-header">
+            <div class="portable-num">03</div>
+            <div class="portable-title">Verify</div>
+          </div>
+          <div class="portable-desc">Check imported memories against the on-chain registry. Cryptographic proof that every memory arrived untouched.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ GET STARTED ═══════════════ -->
+  <section class="section install-section" id="sec-start">
+    <div class="section-inner reveal">
+          <div class="install-layout">
+            <div class="install-left">
+              <div class="section-label">Get Started</div>
+              <div class="section-title">Give your agent a brain.</div>
+              <div class="section-desc" style="margin-top: 0;">Two ways in: drop a config snippet into your IDE for instant MCP memory, or install the SDK when you need complete control.</div>
+
+              <div class="install-bottom">
+                <div id="descAgent" style="font-size: 12px; color: var(--text-muted); line-height: 1.7;">Zero API keys. Completely offline. Your agent gets <code style="background: rgba(0,212,255,0.08); color: var(--accent); padding: 2px 6px; font-size: 11px;">store_memory</code>, <code style="background: rgba(0,212,255,0.08); color: var(--accent); padding: 2px 6px; font-size: 11px;">recall_memories</code>, <code style="background: rgba(0,212,255,0.08); color: var(--accent); padding: 2px 6px; font-size: 11px;">get_memory_stats</code>, and <code style="background: rgba(0,212,255,0.08); color: var(--accent); padding: 2px 6px; font-size: 11px;">find_clinamen</code> tools. Supports Claude Code, Cursor, Windsurf, and every MCP-compatible editor.</div>
+                <div id="descDev" style="font-size: 12px; color: var(--text-muted); line-height: 1.7; display: none;">Full SDK access. Encrypted storage, hybrid search, on-chain verification, and portable memory packs. Connect with Supabase and Base for production-ready agent memory.</div>
+                <div class="install-cta">
+                  <a href="/docs.html" class="btn btn-primary">Read the docs</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="install-right">
+              <div class="install-tabs" style="margin-bottom: 16px;">
+                <button class="btn btn-primary" id="tabAgent" onclick="showTab('agent')" style="font-size: 11px; letter-spacing: 2px;">For AI Agents</button>
+                <button class="btn btn-outline" id="tabDev" onclick="showTab('dev')" style="font-size: 11px; letter-spacing: 2px;">For Developers</button>
+              </div>
+
+              <div id="panelAgent">
+                <div style="font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px;">One command</div>
+                <div class="code-block" style="max-width: 100%;"><span class="prompt">$</span> <span class="cmd">npx cogxai setup</span></div>
+                <div style="font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; margin-top: 24px;">Or add manually to .mcp.json</div>
+                <div class="code-block" style="text-align: left; position: relative; max-width: 100%;">{<br>&nbsp;&nbsp;<span class="str">"mcpServers"</span>: {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"cogxai"</span>: {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"command"</span>: <span class="str">"npx"</span>,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"args"</span>: [<span class="str">"cogxai"</span>, <span class="str">"mcp-serve"</span>, <span class="str">"--local"</span>]<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}<span style="position: absolute; top: 12px; right: 12px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #888; cursor: pointer; padding: 4px 8px; border: 1px solid rgba(0,212,255,0.15); border-radius: 3px;" onclick="navigator.clipboard.writeText(JSON.stringify({mcpServers:{cogxai:{command:'npx',args:['cogxai','mcp-serve','--local']}}},null,2));this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</span></div>
+              </div>
+
+              <div id="panelDev" style="display: none;">
+                <div class="code-block" style="max-width: 100%;"><span class="prompt">$</span> <span class="cmd">npm install cogxai</span></div>
+                <div class="code-block" style="max-width: 100%;"><span class="kw">import</span> { Cortex } <span class="kw">from</span> <span class="str">'cogxai'</span>;<br><br><span class="kw">const</span> brain = <span class="kw">new</span> <span class="type">Cortex</span>({<br>&nbsp;&nbsp;supabase: { url, serviceKey },<br>&nbsp;&nbsp;encryption: { privateKey: process.env.PRIVATE_KEY },<br>});<br><span class="kw">await</span> brain.<span class="fn">init</span>();<br><br><span class="cmt">// Store an encrypted memory</span><br><span class="kw">await</span> brain.<span class="fn">store</span>({<br>&nbsp;&nbsp;type: <span class="str">'episodic'</span>,<br>&nbsp;&nbsp;content: <span class="str">'User prefers concise answers'</span>,<br>&nbsp;&nbsp;summary: <span class="str">'User communication preference'</span>,<br>&nbsp;&nbsp;source: <span class="str">'my-agent'</span>,<br>});<br><br><span class="cmt">// Recall with hybrid search</span><br><span class="kw">const</span> memories = <span class="kw">await</span> brain.<span class="fn">recall</span>({<br>&nbsp;&nbsp;query: <span class="str">'what does the user prefer'</span>,<br>});</div>
+              </div>
+            </div>
+
+          </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left">&copy; CogxAI</div>
+      <div class="footer-links">
+        <a href="/docs.html">Docs</a>
+        <a href="/brain.html">Brain</a>
+        <a href="/benchmark">Benchmark</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="https://x.com/cogxaiproject" target="_blank">X</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ── NAV TOGGLE ──
+    document.getElementById('navToggle').addEventListener('click', function() {
+      this.classList.toggle('open');
+      document.querySelector('.nav-links').classList.toggle('open');
+    });
+
+    // ── MEMORY CONSTELLATION ──
+    (function() {
+      var canvas = document.getElementById('waveCanvas');
+      if (!canvas) return;
+      var ctx = canvas.getContext('2d');
+      var W, H;
+
+      function resize() {
+        var dpr = window.devicePixelRatio || 1;
+        var rect = canvas.parentElement.getBoundingClientRect();
+        W = rect.width; H = rect.height;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      // Intro animation: starts full screen, transitions to bottom-right
+      var introStart = Date.now();
+      var introDuration = 2200;
+      var introDelay = 800;
+
+      // Fade mask: visible in bottom-right, hidden in top-left (text area)
+      function fadeMask(x, y) {
+        var elapsed = Date.now() - introStart;
+        var t;
+        if (elapsed < introDelay) {
+          t = 0;
+        } else {
+          t = Math.min(1, (elapsed - introDelay) / introDuration);
+          t = t * t * (3 - 2 * t);
+        }
+
+        if (t === 0) return 1;
+
+        var nx = x / W, ny = y / H;
+
+        // Final diagonal mask: bottom-right visible, top-left hidden
+        var finalCutoff = 0.75 - nx * 0.75;
+        var finalF = Math.max(0, Math.min(1, (ny - finalCutoff) * 3));
+
+        // Smoothly interpolate: at t=0 everything is 1, at t=1 use finalF
+        var f = 1 - t * (1 - finalF);
+
+        // Text area protection
+        if (nx < 0.45 && t > 0.3) {
+          var ps = (t - 0.3) / 0.7;
+          f *= Math.max(0, Math.min(1, (ny - (0.65 * ps)) * (1 + ps * 4)));
+        }
+
+        return f;
+      }
+
+      // Create nodes
+      var nodes = [];
+      var count = 220;
+      for (var i = 0; i < count; i++) {
+        var x = Math.random() * W * 1.2 - W * 0.1;
+        var y = Math.random() * H * 1.2 - H * 0.1;
+        // Some nodes are "hub" nodes — bigger and brighter (like important memories)
+        var isHub = Math.random() < 0.12;
+        nodes.push({
+          x: x, y: y,
+          bx: x, by: y,
+          vx: (Math.random() - 0.5) * 0.15,
+          vy: (Math.random() - 0.5) * 0.15,
+          r: isHub ? 2.5 + Math.random() * 2.5 : 1.0 + Math.random() * 2.0,
+          phase: Math.random() * 6.28,
+          speed: 0.003 + Math.random() * 0.008,
+          brightness: isHub ? 0.7 + Math.random() * 0.3 : 0.3 + Math.random() * 0.7,
+          hub: isHub
+        });
+      }
+
+      // Find connections (edges between nearby nodes)
+      var maxDist = 180;
+      var edges = [];
+      for (var i = 0; i < nodes.length; i++) {
+        for (var j = i + 1; j < nodes.length; j++) {
+          var dx = nodes[i].bx - nodes[j].bx;
+          var dy = nodes[i].by - nodes[j].by;
+          var d = Math.sqrt(dx * dx + dy * dy);
+          if (d < maxDist) {
+            edges.push({ a: i, b: j, dist: d });
+          }
+        }
+      }
+
+      // Pulses traveling along edges
+      var pulses = [];
+
+      var time = 0;
+
+      function frame() {
+        ctx.clearRect(0, 0, W, H);
+        time += 0.016;
+
+        // Spawn pulses
+        if (Math.random() < 0.12 && edges.length > 0) {
+          var e = edges[Math.floor(Math.random() * edges.length)];
+          pulses.push({ a: e.a, b: e.b, t: 0, speed: 0.004 + Math.random() * 0.008 });
+        }
+
+        // Update nodes
+        for (var i = 0; i < nodes.length; i++) {
+          var n = nodes[i];
+          n.phase += n.speed;
+          // Gentle floating drift
+          n.x = n.bx + Math.sin(n.phase * 1.1 + i) * 8 + Math.sin(time * 0.3 + i * 0.5) * 4;
+          n.y = n.by + Math.cos(n.phase * 0.9 + i * 0.7) * 6 + Math.sin(time * 0.2 + i * 0.3) * 3;
+        }
+
+        // ── Draw edges ──
+        for (var i = 0; i < edges.length; i++) {
+          var e = edges[i];
+          var a = nodes[e.a], b = nodes[e.b];
+          var fa = fadeMask(a.x, a.y), fb = fadeMask(b.x, b.y);
+          var fade = Math.min(fa, fb);
+          if (fade < 0.01) continue;
+
+          // Closer nodes = brighter line
+          var dx = a.x - b.x, dy = a.y - b.y;
+          var d = Math.sqrt(dx * dx + dy * dy);
+          var distFade = 1 - d / maxDist;
+          var alpha = fade * distFade * 0.22;
+
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.strokeStyle = 'rgba(0,190,235,' + alpha.toFixed(4) + ')';
+          ctx.lineWidth = 0.6;
+          ctx.stroke();
+        }
+
+        // ── Draw pulses ──
+        for (var i = pulses.length - 1; i >= 0; i--) {
+          var p = pulses[i];
+          p.t += p.speed;
+          if (p.t > 1) { pulses.splice(i, 1); continue; }
+          var a = nodes[p.a], b = nodes[p.b];
+          var px = a.x + (b.x - a.x) * p.t;
+          var py = a.y + (b.y - a.y) * p.t;
+          var fade = fadeMask(px, py);
+          if (fade < 0.01) continue;
+
+          var glow = Math.sin(p.t * 3.14) * fade; // brightest in middle of travel
+          ctx.beginPath();
+          ctx.arc(px, py, 2, 0, 6.28);
+          ctx.fillStyle = 'rgba(0,220,255,' + (glow * 0.7).toFixed(3) + ')';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(px, py, 6, 0, 6.28);
+          ctx.fillStyle = 'rgba(0,210,255,' + (glow * 0.1).toFixed(3) + ')';
+          ctx.fill();
+        }
+
+        // ── Draw nodes ──
+        for (var i = 0; i < nodes.length; i++) {
+          var n = nodes[i];
+          var fade = fadeMask(n.x, n.y);
+          if (fade < 0.01) continue;
+
+          var pulse = 1 + Math.sin(n.phase * 2) * 0.15;
+          var r = n.r * pulse;
+          var br = n.brightness * fade;
+
+          // Soft radial glow
+          var glowR = r * (n.hub ? 8 : 5);
+          var grd = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, glowR);
+          var ga = br * (n.hub ? 0.12 : 0.06);
+          grd.addColorStop(0, 'rgba(0,210,255,' + ga.toFixed(4) + ')');
+          grd.addColorStop(0.4, 'rgba(0,200,255,' + (ga * 0.4).toFixed(4) + ')');
+          grd.addColorStop(1, 'rgba(0,200,255,0)');
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, glowR, 0, 6.28);
+          ctx.fillStyle = grd;
+          ctx.fill();
+
+          // Core
+          var coreGrd = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r);
+          coreGrd.addColorStop(0, 'rgba(220,245,255,' + (br * (n.hub ? 0.9 : 0.6)).toFixed(3) + ')');
+          coreGrd.addColorStop(1, 'rgba(0,210,250,' + (br * (n.hub ? 0.5 : 0.3)).toFixed(3) + ')');
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r, 0, 6.28);
+          ctx.fillStyle = coreGrd;
+          ctx.fill();
+        }
+
+        requestAnimationFrame(frame);
+      }
+      frame();
+    })();
+
+    // ── HIDE LABEL CURSOR AFTER ENTRANCE ──
+    setTimeout(function() {
+      var label = document.querySelector('.hero-label');
+      if (label) label.classList.add('typed');
+    }, 3800);
+
+
+    // ── SCROLL REVEAL ──
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+
+    // ── SECTION NAV ──
+    (function() {
+      var navItems = document.querySelectorAll('.section-nav-item');
+      var sectionIds = [];
+      navItems.forEach(function(item) { sectionIds.push(item.getAttribute('data-target')); });
+
+      // Click to scroll
+      navItems.forEach(function(item) {
+        item.addEventListener('click', function() {
+          var target = document.getElementById(item.getAttribute('data-target'));
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+
+      // Scroll tracking
+      var sections = sectionIds.map(function(id) { return document.getElementById(id); }).filter(Boolean);
+      var ticking = false;
+      function updateActive() {
+        var scrollY = window.scrollY + window.innerHeight * 0.35;
+        var activeIdx = 0;
+        for (var i = sections.length - 1; i >= 0; i--) {
+          if (sections[i].offsetTop <= scrollY) { activeIdx = i; break; }
+        }
+        navItems.forEach(function(item, idx) {
+          if (idx === activeIdx) item.classList.add('active');
+          else item.classList.remove('active');
+        });
+        ticking = false;
+      }
+      window.addEventListener('scroll', function() {
+        if (!ticking) { ticking = true; requestAnimationFrame(updateActive); }
+      });
+      updateActive();
+    })();
+
+    // ── GET STARTED TAB SWITCHER ──
+    function showTab(tab) {
+      var agentPanel = document.getElementById('panelAgent');
+      var devPanel = document.getElementById('panelDev');
+      var agentBtn = document.getElementById('tabAgent');
+      var devBtn = document.getElementById('tabDev');
+      var descAgent = document.getElementById('descAgent');
+      var descDev = document.getElementById('descDev');
+      if (tab === 'agent') {
+        agentPanel.style.display = '';
+        devPanel.style.display = 'none';
+        agentBtn.className = 'btn btn-primary';
+        devBtn.className = 'btn btn-outline';
+        descAgent.style.display = '';
+        descDev.style.display = 'none';
+      } else {
+        agentPanel.style.display = 'none';
+        devPanel.style.display = '';
+        agentBtn.className = 'btn btn-outline';
+        devBtn.className = 'btn btn-primary';
+        descAgent.style.display = 'none';
+        descDev.style.display = '';
+      }
+    }
+
+    // ── AUTO-GLOW (reusable) ──
+    var isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+    function autoGlow(selector, delay) {
+      var cards = document.querySelectorAll(selector);
+      if (!cards.length) return;
+
+      if (isMobile) {
+        var glowObserver = new IntersectionObserver(function(entries) {
+          entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('glow');
+            } else {
+              entry.target.classList.remove('glow');
+            }
+          });
+        }, { rootMargin: '-25% 0px -55% 0px' });
+        cards.forEach(function(card) { glowObserver.observe(card); });
+      } else {
+        var current = 0, hovered = -1, interval;
+        function set(idx) {
+          cards.forEach(function(c, i) {
+            if (i === idx) c.classList.add('glow');
+            else c.classList.remove('glow');
+          });
+        }
+        function cycle() {
+          if (hovered >= 0) return;
+          current = (current + 1) % cards.length;
+          set(current);
+        }
+        set(0);
+        interval = setInterval(cycle, delay);
+        cards.forEach(function(card, i) {
+          card.addEventListener('mouseenter', function() { hovered = i; set(i); });
+          card.addEventListener('mouseleave', function() {
+            hovered = -1; current = i;
+            clearInterval(interval);
+            interval = setInterval(cycle, delay);
+          });
+        });
+      }
+    }
+
+    autoGlow('.problem-card', 2000);
+    autoGlow('.principle-card', 2000);
+    autoGlow('#sec-stack .layer-card', 2000);
+    autoGlow('.memory-item', 2000);
+    autoGlow('.dream-step', 1500);
+    autoGlow('#sec-reflection .layer-card', 2000);
+    autoGlow('.venice-layer', 2000);
+    autoGlow('.chain-block', 2000);
+    autoGlow('.portable-card', 2000);
+
+  </script>
+</body>
+</html>
