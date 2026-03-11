@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — Get Your CogxAI API Key</title>
+  <meta name="description" content="Grab your Cortex API key instantly. Have your first memory stored within minutes.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
+    scrollbar-width: thin;
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+      --bg: #0a0a0f;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --text-faint: #6b7280;
+      --accent: #00d4ff;
+      --accent-purple: #6366f1;
+      --mono: 'JetBrains Mono', monospace;
+      --border: rgba(255, 255, 255, 0.06);
+      --surface: rgba(255, 255, 255, 0.02);
+      --code-bg: rgba(255, 255, 255, 0.03);
+      --error: #ef4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { max-width: 100vw; overflow-x: hidden; }
+    body {
+      font-family: var(--mono);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      max-width: 100vw;
+      overflow-y: scroll;
+    }
+    ::selection { background: var(--accent); color: var(--bg); }
+
+    /* ── BACKGROUND ORBS ── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -350px;
+      left: -350px;
+      width: 900px;
+      height: 900px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, rgba(99, 102, 241, 0.02) 35%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -500px;
+      right: -500px;
+      width: 1400px;
+      height: 1400px;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.03) 0%, rgba(0, 212, 255, 0.01) 30%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      width: calc(100% - 160px); max-width: 1200px; z-index: 100;
+      background: rgba(10, 10, 15, 0.45);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: none;
+      border-radius: 16px;
+    }
+    .nav-inner {
+      padding: 0 36px;
+      height: 48px; display: flex; align-items: center;
+    }
+    .nav-logo {
+      font-size: 18px; font-weight: 800; letter-spacing: 2px;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-decoration: none; transition: opacity 0.3s;
+    }
+    .nav-logo:hover { opacity: 0.8; text-decoration: none; }
+    .nav-links {
+      display: flex; align-items: center; gap: 28px; margin-left: auto;
+    }
+    .nav-links a {
+      color: var(--text-muted); font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; text-decoration: none; transition: color 0.3s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-links a.nav-active { color: var(--accent); font-weight: 600; }
+    .nav-toggle {
+      display: none; background: none;
+      border: none;
+      cursor: pointer; padding: 8px 7px; margin-left: auto;
+    }
+    .nav-toggle span {
+      display: block; width: 16px; height: 1.5px;
+      background: var(--text-muted); transition: all 0.3s;
+    }
+    .nav-toggle span + span { margin-top: 4px; }
+    .nav-toggle.open span:nth-child(1) { transform: rotate(45deg) translate(3.5px, 3.5px); }
+    .nav-toggle.open span:nth-child(2) { opacity: 0; }
+    .nav-toggle.open span:nth-child(3) { transform: rotate(-45deg) translate(3.5px, -3.5px); }
+
+    .page {
+      max-width: 580px;
+      margin: 0 auto;
+      padding: 100px 24px 120px;
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+    h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 48px;
+      line-height: 1.8;
+    }
+
+    /* Form */
+    .form-group { margin-bottom: 24px; }
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    input[type="text"] {
+      width: 100%;
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    input[type="text"]:focus { border-color: var(--accent); }
+    input[type="text"]::placeholder { color: var(--text-faint); }
+    input[type="text"].error { border-color: var(--error); }
+
+    .field-hint {
+      font-size: 12px;
+      color: var(--text-faint);
+      margin-top: 6px;
+      line-height: 1.6;
+    }
+    .field-hint a { color: var(--accent); text-decoration: none; }
+    .field-hint a:hover { text-decoration: underline; }
+
+    .field-error {
+      font-size: 12px;
+      color: var(--error);
+      margin-top: 6px;
+      display: none;
+    }
+
+    .btn-register {
+      width: 100%;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 16px 28px;
+      background: var(--accent);
+      color: var(--bg);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      margin-top: 8px;
+    }
+    .btn-register:hover { background: transparent; color: var(--accent); }
+    .btn-register:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Global error */
+    .global-error {
+      background: rgba(239, 68, 68, 0.06);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      color: var(--error);
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 24px;
+      display: none;
+    }
+
+    /* Success state */
+    .success-panel { display: none; }
+    .success-panel.visible {
+      display: block;
+      animation: fadeUp 0.5s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .key-box {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 20px 0 12px;
+      position: relative;
+    }
+    .key-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 8px;
+    }
+    .key-value {
+      color: #4ec9b0;
+      font-size: 14px;
+      font-weight: 600;
+      word-break: break-all;
+      line-height: 1.6;
+      cursor: pointer;
+    }
+    .key-copy {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .key-copy:hover { color: var(--accent); }
+
+    .key-warning {
+      font-size: 12px;
+      color: #f59e0b;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .snippet-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      margin-top: 32px;
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 20px 24px;
+      border-radius: 12px;
+      overflow-x: auto;
+      margin: 8px 0 16px;
+      font-size: 12px;
+      line-height: 1.8;
+      position: relative;
+    }
+    pre .cmt { color: #6a9955; }
+    pre .str { color: #ce9178; }
+    pre .key { color: #7ec8e3; }
+
+    .snippet-copy {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      cursor: pointer;
+    }
+    .snippet-copy:hover { color: var(--accent); }
+
+    .docs-link {
+      display: inline-block;
+      margin-top: 24px;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+    .docs-link:hover { border-color: var(--accent); }
+
+    /* Mode cards */
+    .mode-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      cursor: pointer;
+      transition: border-color 0.3s, transform 0.15s, box-shadow 0.3s, background 0.3s;
+      backdrop-filter: blur(8px);
+    }
+    .mode-card:hover { border-color: rgba(255, 255, 255, 0.12); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); }
+    .mode-card.glow {
+      border-color: rgba(0, 212, 255, 0.3) !important;
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05) !important;
+      background: rgba(255, 255, 255, 0.04) !important;
+    }
+    .mode-card.selected {
+      border-color: rgba(0, 212, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.1), 0 0 40px rgba(0, 212, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .mode-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .mode-name { font-weight: 700; font-size: 15px; }
+    .mode-badge { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; font-weight: 600; }
+    .mode-desc { font-size: 12px; color: var(--text-muted); line-height: 1.7; margin-bottom: 10px; }
+    .mode-cmd { font-size: 11px; color: var(--text-faint); background: rgba(255, 255, 255, 0.03); padding: 4px 8px; border-radius: 6px; }
+
+    /* Self-hosted info box */
+    .info-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      line-height: 2;
+      backdrop-filter: blur(8px);
+    }
+
+    @media (max-width: 768px) {
+      nav { width: calc(100% - 24px); }
+      .nav-toggle { display: flex; flex-direction: column; }
+      .nav-links {
+        display: none; position: absolute; top: 52px; left: 0; right: 0;
+        background: rgba(10, 10, 15, 0.95);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        flex-direction: column; padding: 1.2rem 2rem; gap: 1.2rem;
+      }
+      .nav-links.open { display: flex; }
+      .nav-inner { padding: 0 20px; }
+      .page { padding: 80px 20px 80px; }
+      h1 { font-size: 24px; }
+      pre { font-size: 11px; padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">CogxAI</a>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="nav-links">
+        <a href="/install.html">For Agents</a>
+        <a href="/docs.html">Docs</a>
+        <a href="/brain.html">Brain</a>
+        <a href="/explore">Explorer</a>
+        <a href="/setup">Get Started</a>
+      <a href="https://github.com/Black-dork/cogxai" target="_blank">GitHub</a>
+      <a href="https://x.com/" target="_blank">X</a>
+        <a href="/register" class="nav-active" style="background: rgba(0,212,255,0.08); color: #00d4ff; padding: 6px 14px; border-radius: 10px; font-weight: 700; font-size: 11px; line-height: 1.7; letter-spacing: 1.5px; border: 1px solid rgba(0,212,255,0.3);">Register</a>
+      </div>
+    </div>
+  </nav>
+
+<div class="page">
+
+  <!-- Mode picker -->
+  <div id="modePicker" style="margin-bottom: 48px;">
+    <h1>Get started with <em>CogxAI</em></h1>
+    <p class="subtitle">Pick a deployment mode. You can change it anytime.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div onclick="selectMode('local')" class="mode-card" id="modeLocal">
+        <div class="mode-header">
+          <span class="mode-name">Local</span>
+          <span class="mode-badge" style="background: rgba(16,185,129,0.15); color: #10b981;">Zero config</span>
+        </div>
+        <div class="mode-desc">Everything stays on your device. No accounts, no keys, completely offline. Ideal for testing or when privacy matters most.</div>
+        <code class="mode-cmd">npx cogxai mcp-serve --local</code>
+      </div>
+
+      <div onclick="selectMode('selfhosted')" class="mode-card" id="modeSelfHosted">
+        <div class="mode-header">
+          <span class="mode-name">Self-hosted</span>
+          <span class="mode-badge" style="background: rgba(255,255,255,0.06); color: var(--text-muted);">Your infra</span>
+        </div>
+        <div class="mode-desc">Connect your own Supabase and Voyage AI credentials. Complete control over your data. No CogxAI account required.</div>
+        <code class="mode-cmd">npm install cogxai && npx cogxai setup</code>
+      </div>
+
+      <div onclick="selectMode('cloud')" class="mode-card" id="modeCloud">
+        <div class="mode-header">
+          <span class="mode-name">Cloud</span>
+          <span class="mode-badge" style="background: rgba(0,212,255,0.15); color: var(--accent);">Fastest</span>
+        </div>
+        <div class="mode-desc">Let CogxAI handle the infrastructure. Sign up, receive an API key, and begin storing memories immediately.</div>
+        <code class="mode-cmd">curl -X POST https://cogxai.org/api/cortex/store ...</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- Local mode panel -->
+  <div id="localPanel" style="display:none;">
+    <h1>Local mode</h1>
+    <p class="subtitle">No credentials required. Your machine handles everything.</p>
+
+    <div class="snippet-label">For Claude Desktop / Cursor (MCP)</div>
+    <pre><button class="snippet-copy" onclick="copyToClipboard(this.parentElement.dataset.raw, this)">Copy</button><span class="cmt"># One command, done</span>
+npx cogxai mcp-install --local</pre>
+
+    <div class="snippet-label">Or add manually to Claude Desktop config</div>
+    <pre data-raw='{"mcpServers":{"cogxai":{"command":"npx","args":["cogxai","mcp-serve","--local"]}}}'><button class="snippet-copy" onclick="copyToClipboard(this.parentElement.dataset.raw, this)">Copy</button>{
+  <span class="key">"mcpServers"</span>: {
+    <span class="key">"cogxai"</span>: {
+      <span class="key">"command"</span>: <span class="str">"npx"</span>,
+      <span class="key">"args"</span>: [<span class="str">"cogxai"</span>, <span class="str">"mcp-serve"</span>, <span class="str">"--local"</span>]
+    }
+  }
+}</pre>
+
+    <div class="snippet-label">For Node.js / TypeScript</div>
+    <pre><button class="snippet-copy" onclick="copyToClipboard(this.parentElement.dataset.raw, this)">Copy</button><span class="cmt"># Install</span>
+npm install cogxai
+
+<span class="cmt"># Use</span>
+import { Cortex } from 'cogxai';
+const brain = new Cortex({ local: true });
+await brain.init();
+await brain.store({ content: 'Hello!', type: 'episodic' });
+const memories = await brain.recall({ query: 'hello' });</pre>
+
+    <p style="margin-top: 24px; font-size: 12px; color: var(--text-faint);">All data lives in <code style="background: rgba(0,212,255,0.08); padding: 2px 6px; border-radius: 4px; color: var(--accent);">~/.cogxai/memories.json</code>. GTE-Small embeddings (~30MB) download automatically the first time you run it.</p>
+    <a href="/docs.html" class="docs-link">Full documentation →</a>
+    <br><a href="#" class="docs-link" onclick="showModePicker(); return false;" style="margin-top: 8px;">← Choose a different mode</a>
+  </div>
+
+  <!-- Self-hosted panel -->
+  <div id="selfHostedPanel" style="display:none;">
+    <h1>Self-hosted mode</h1>
+    <p class="subtitle">No CogxAI account necessary. You plug into your own infrastructure directly.</p>
+
+    <div class="snippet-label">What you need</div>
+    <div class="info-box">
+      <strong>Supabase</strong> — stores memories + vector search <span style="color: var(--text-faint);">(free tier works)</span><br>
+      <strong>Voyage AI</strong> — embedding generation <span style="color: var(--text-faint);">(voyage-4-large)</span><br>
+      <strong>Anthropic</strong> — powers dream cycles + reflection <span style="color: var(--text-faint);">(optional)</span>
+    </div>
+
+    <div class="snippet-label">Setup</div>
+    <pre><button class="snippet-copy" onclick="copyToClipboard(this.parentElement.dataset.raw, this)">Copy</button><span class="cmt"># Install and run the setup wizard</span>
+npm install cogxai
+npx cogxai setup</pre>
+
+    <div class="snippet-label">Or configure manually</div>
+    <pre><button class="snippet-copy" onclick="copyToClipboard(this.parentElement.dataset.raw, this)">Copy</button>import { Cortex } from 'cogxai';
+
+const brain = new Cortex({
+  supabase: {
+    url: process.env.SUPABASE_URL,
+    serviceKey: process.env.SUPABASE_KEY,
+  },
+  embedding: {
+    provider: <span class="str">'voyage'</span>,
+    apiKey: process.env.VOYAGE_API_KEY,
+    model: <span class="str">'voyage-4-large'</span>,
+    dimensions: 1024,
+  },
+  agentId: <span class="str">'my-agent'</span>,
+});
+await brain.init();</pre>
+
+    <a href="/docs.html" class="docs-link">Full documentation →</a>
+    <br><a href="#" class="docs-link" onclick="showModePicker(); return false;" style="margin-top: 8px;">← Choose a different mode</a>
+  </div>
+
+  <!-- Cloud mode (registration form) -->
+  <div id="registerForm" style="display:none;">
+    <h1>Cloud mode — Get your <em>API key</em></h1>
+    <p class="subtitle">Create your agent profile and start saving memories right away. Zero infrastructure overhead.</p>
+
+    <div class="global-error" id="globalError"></div>
+
+    <div class="form-group">
+      <label for="agentName">Agent Name</label>
+      <input type="text" id="agentName" placeholder="my-agent" autocomplete="off" spellcheck="false">
+      <div class="field-error" id="nameError"></div>
+    </div>
+
+    <div class="form-group">
+      <label for="walletAddress">Wallet Address <span style="color: var(--text-faint); font-weight: 400;">(optional)</span></label>
+      <input type="text" id="walletAddress" placeholder="0x... (optional — for wallet-scoped encryption)" autocomplete="off" spellcheck="false">
+      <div class="field-hint">Need a wallet? Any Base-compatible wallet will do. Try <a href="https://metamask.app" target="_blank">metamask.app</a></div>
+      <div class="field-error" id="walletError"></div>
+    </div>
+
+    <button class="btn-register" id="submitBtn" onclick="handleRegister()">Get API Key</button>
+    <br><a href="#" class="docs-link" onclick="showModePicker(); return false;" style="margin-top: 16px;">← Choose a different mode</a>
+  </div>
+
+  <div class="success-panel" id="successPanel">
+    <h1>You're in ✓</h1>
+    <p class="subtitle">Your Cortex API key has been generated. Copy it immediately — you won't be able to view it again.</p>
+
+    <div class="key-box">
+      <div class="key-label">Your API Key</div>
+      <div class="key-value" id="apiKeyDisplay" onclick="copyKey()"></div>
+      <button class="key-copy" id="keyCopyBtn" onclick="copyKey()">Copy</button>
+    </div>
+    <div class="key-warning">⚠️ Store this somewhere safe — this key is displayed only once.</div>
+
+    <div class="snippet-label">Store your first memory</div>
+    <pre id="storeSnippet"></pre>
+
+    <div class="snippet-label">Recall it back</div>
+    <pre id="recallSnippet"></pre>
+
+    <a href="/docs.html" class="docs-link">Full documentation →</a>
+  </div>
+</div>
+
+<!-- NAV TOGGLE SCRIPT -->
+<script>
+document.getElementById('navToggle').addEventListener('click', function() {
+  this.classList.toggle('open');
+  document.querySelector('.nav-links').classList.toggle('open');
+});
+</script>
+
+<script>
+  function isValidEvmAddress(str) {
+    return /^0x[0-9a-fA-F]{40}$/.test(str);
+  }
+
+  function showError(id, msg) {
+    var el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = 'block';
+    el.previousElementSibling.tagName === 'INPUT' && el.previousElementSibling.classList.add('error');
+  }
+
+  function clearErrors() {
+    document.querySelectorAll('.field-error').forEach(function(el) { el.style.display = 'none'; });
+    document.querySelectorAll('input').forEach(function(el) { el.classList.remove('error'); });
+    document.getElementById('globalError').style.display = 'none';
+  }
+
+  function copyToClipboard(text, btn) {
+    navigator.clipboard.writeText(text).then(function() {
+      var orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(function() { btn.textContent = orig; }, 1500);
+    });
+  }
+
+  function copyKey() {
+    var key = document.getElementById('apiKeyDisplay').textContent;
+    copyToClipboard(key, document.getElementById('keyCopyBtn'));
+  }
+
+  async function handleRegister() {
+    clearErrors();
+
+    var name = document.getElementById('agentName').value.trim();
+    var wallet = document.getElementById('walletAddress').value.trim();
+    var valid = true;
+
+    if (name.length < 2) {
+      showError('nameError', 'Agent name must be at least 2 characters');
+      document.getElementById('agentName').classList.add('error');
+      valid = false;
+    }
+
+    if (wallet && !isValidEvmAddress(wallet)) {
+      showError('walletError', 'Invalid wallet address (must be 0x format, 42 chars)');
+      document.getElementById('walletAddress').classList.add('error');
+      valid = false;
+    }
+
+    if (!valid) return;
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Registering...';
+
+    try {
+      var resp = await fetch('/api/cortex/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, wallet: wallet })
+      });
+
+      var data = await resp.json();
+
+      if (!resp.ok) {
+        var ge = document.getElementById('globalError');
+        if (resp.status === 409) {
+          ge.textContent = 'This wallet already has an account. Please use your existing API key.';
+        } else if (resp.status === 429) {
+          ge.textContent = 'Rate limit reached. Hold on a moment and try again.';
+        } else {
+          ge.textContent = data.error || 'Registration failed. Please try again.';
+        }
+        ge.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Get API Key';
+        return;
+      }
+
+      var apiKey = data.apiKey;
+
+      // Show success
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('apiKeyDisplay').textContent = apiKey;
+
+      // Build snippets
+      var storeSnippet = document.getElementById('storeSnippet');
+      storeSnippet.innerHTML = '<button class="snippet-copy" onclick="copyToClipboard(this.parentElement.dataset.raw, this)">Copy</button>' +
+        '<span class="cmt"># Store your first memory</span>\n' +
+        'curl -X POST https://cogxai.org/api/cortex/store \\\n' +
+        '  -H <span class="str">"Content-Type: application/json"</span> \\\n' +
+        '  -H <span class="str">"Authorization: Bearer ' + apiKey + '"</span> \\\n' +
+        '  -d <span class="str">\'{"content": "Hello from my agent!", "summary": "First test memory", "type": "episodic", "importance": 0.8}\'</span>';
+      storeSnippet.dataset.raw = 'curl -X POST https://cogxai.org/api/cortex/store \\\n  -H "Content-Type: application/json" \\\n  -H "Authorization: Bearer ' + apiKey + '" \\\n  -d \'{"content": "Hello from my agent!", "summary": "First test memory", "type": "episodic", "importance": 0.8}\'';
+
+      var recallSnippet = document.getElementById('recallSnippet');
+      recallSnippet.innerHTML = '<button class="snippet-copy" onclick="copyToClipboard(this.parentElement.dataset.raw, this)">Copy</button>' +
+        '<span class="cmt"># Recall it back</span>\n' +
+        'curl -X POST https://cogxai.org/api/cortex/recall \\\n' +
+        '  -H <span class="str">"Content-Type: application/json"</span> \\\n' +
+        '  -H <span class="str">"Authorization: Bearer ' + apiKey + '"</span> \\\n' +
+        '  -d <span class="str">\'{"query": "hello"}\'</span>';
+      recallSnippet.dataset.raw = 'curl -X POST https://cogxai.org/api/cortex/recall \\\n  -H "Content-Type: application/json" \\\n  -H "Authorization: Bearer ' + apiKey + '" \\\n  -d \'{"query": "hello"}\'';
+
+      var sp = document.getElementById('successPanel');
+      sp.classList.add('visible');
+
+    } catch (err) {
+      var ge = document.getElementById('globalError');
+      ge.textContent = 'Connection failed. Verify your network and try again.';
+      ge.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Get API Key';
+    }
+  }
+
+  // Enter key submits
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !document.getElementById('submitBtn').disabled && document.getElementById('registerForm').style.display !== 'none') {
+      handleRegister();
+    }
+  });
+
+  function selectMode(mode) {
+    // Highlight selected card
+    document.querySelectorAll('.mode-card').forEach(function(c) { c.classList.remove('selected', 'glow'); });
+    var cardId = mode === 'local' ? 'modeLocal' : mode === 'selfhosted' ? 'modeSelfHosted' : 'modeCloud';
+    document.getElementById(cardId).classList.add('selected');
+    glowPaused = true;
+
+    document.getElementById('modePicker').style.display = 'none';
+    document.getElementById('localPanel').style.display = 'none';
+    document.getElementById('selfHostedPanel').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'none';
+    if (mode === 'local') document.getElementById('localPanel').style.display = 'block';
+    else if (mode === 'selfhosted') document.getElementById('selfHostedPanel').style.display = 'block';
+    else document.getElementById('registerForm').style.display = 'block';
+  }
+
+  function showModePicker() {
+    document.getElementById('localPanel').style.display = 'none';
+    document.getElementById('selfHostedPanel').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('modePicker').style.display = 'block';
+    document.querySelectorAll('.mode-card').forEach(function(c) { c.classList.remove('selected'); });
+    glowPaused = false;
+  }
+
+  // autoGlow on mode cards
+  (function() {
+    var els = document.querySelectorAll('.mode-card');
+    var idx = 0;
+    window.glowPaused = false;
+    function cycle() {
+      if (glowPaused) return;
+      els.forEach(function(e) { e.classList.remove('glow'); });
+      els[idx].classList.add('glow');
+      idx = (idx + 1) % els.length;
+    }
+    cycle();
+    setInterval(cycle, 2000);
+    els.forEach(function(e) {
+      e.addEventListener('mouseenter', function() { if (!glowPaused) { els.forEach(function(x) { x.classList.remove('glow'); }); e.classList.add('glow'); } });
+    });
+  })();
+</script>
+</body>
+</html>
