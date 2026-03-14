@@ -480,7 +480,7 @@ export function dashboardRoutes(): Router {
 
   // GET /agent-types — list available agent type configs for UI presets
   router.get('/agent-types', (_req: Request, res: Response) => {
-    const types = Object.values(AGENT_TYPE_CONFIGS).map(c => ({
+    const types = Object.values(AGENT_TYPE_CONFIGS).map((c: any) => ({
       type: c.type,
       label: c.label,
       description: c.description,

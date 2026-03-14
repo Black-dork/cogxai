@@ -96,7 +96,9 @@ function installMcpConfig(target: McpTarget, agentName: string, wallet: string, 
   const mcpEntry = local ? {
     command: 'npx',
     args: ['cogxai', 'mcp-serve', '--local'],
-    env: {},
+    env: {
+      COGXAI_LOCAL: 'true',
+    },
   } : {
     command: 'npx',
     args: ['cogxai', 'mcp-serve'],
