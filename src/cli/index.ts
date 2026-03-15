@@ -39,6 +39,24 @@ if (command === 'setup') {
     console.error('Export failed:', err.message);
     process.exit(1);
   });
+} else if (command === 'status') {
+  const { runStatus } = require('./status');
+  runStatus().catch((err: Error) => {
+    console.error('Status check failed:', err.message);
+    process.exit(1);
+  });
+} else if (command === 'import') {
+  const { runImport } = require('./import');
+  runImport().catch((err: Error) => {
+    console.error('Import failed:', err.message);
+    process.exit(1);
+  });
+} else if (command === 'sync') {
+  const { runSync } = require('./sync');
+  runSync().catch((err: Error) => {
+    console.error('Sync failed:', err.message);
+    process.exit(1);
+  });
 } else if (command === 'mcp-serve') {
   // Start the MCP server (used by IDE integrations)
   require('../mcp/server');
@@ -60,7 +78,10 @@ if (command === 'setup') {
   console.log(`    ${c.cyan}npx cogxai init${c.reset}          Advanced setup (self-hosted options)`);
   console.log(`    ${c.cyan}npx cogxai register${c.reset}      Get an API key only`);
   console.log(`    ${c.cyan}npx cogxai mcp-install${c.reset}   Install MCP server for your IDE`);
+  console.log(`    ${c.cyan}npx cogxai status${c.reset}        Check if CogxAI is active`);
   console.log(`    ${c.cyan}npx cogxai export${c.reset}        Export memories to file`);
+  console.log(`    ${c.cyan}npx cogxai import <file>${c.reset} Import from JSON, ChatGPT, or markdown`);
+  console.log(`    ${c.cyan}npx cogxai sync${c.reset}          Sync memories to a context file`);
   console.log(`    ${c.cyan}npx cogxai ship "msg"${c.reset}    Broadcast to Telegram channel`);
   console.log(`    ${c.cyan}npx cogxai start${c.reset}         Start the CogxAI bot\n`);
   console.log(`  ${c.bold}As a library:${c.reset}\n`);
