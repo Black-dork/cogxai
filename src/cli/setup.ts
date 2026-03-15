@@ -76,8 +76,16 @@ function getMcpTargets(): McpTarget[] {
   // Claude Code — project-level .mcp.json
   targets.push({
     key: 'claude-code',
-    label: 'Claude Code (project)',
+    label: 'Claude Code (this project)',
     configPath: path.resolve(process.cwd(), '.mcp.json'),
+    wrapKey: 'mcpServers',
+  });
+
+  // Claude Code — global (all projects)
+  targets.push({
+    key: 'claude-code-global',
+    label: 'Claude Code (all projects)',
+    configPath: path.join(home, '.claude.json'),
     wrapKey: 'mcpServers',
   });
 
@@ -181,7 +189,7 @@ export async function runSetup(): Promise<void> {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: agentName,
-          wallet: wallet || 'pending',
+          ...(wallet && { wallet }),
         }),
       });
 

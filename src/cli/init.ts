@@ -546,7 +546,7 @@ export async function runInit(): Promise<void> {
     }
   }
 
-  console.log(`\n  ${c.dim}Docs:    https://github.com/Black-dork/cogxaibot${c.reset}`);
+  console.log(`\n  ${c.dim}Docs:    https://github.com/CogxAI/CogxAIbot${c.reset}`);
   console.log(`  ${c.dim}Website: https://cogxai.org${c.reset}`);
   printDivider();
   console.log('');

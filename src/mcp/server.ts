@@ -92,7 +92,7 @@ function loadSelfHosted() {
 
 const server = new McpServer({
   name: 'cogxai-memory',
-  version: '2.8.1',
+  version: '2.8.6',
 });
 
 // ── Shared schemas ───────────────────────────────────────────────────
