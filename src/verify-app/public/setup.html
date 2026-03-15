@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Get Started — CogxAI</title>
   <meta name="description" content="Add persistent memory to your AI agent in under a minute. No coding needed.">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -810,8 +810,8 @@
       <a href="/brain.html">Brain</a>
       <a href="/explore">Explorer</a>
       <a href="/setup" class="nav-active">Get Started</a>
-      <a href="https://github.com/Black-dork/cogxai" target="_blank">GitHub</a>
-      <a href="https://x.com/" target="_blank">X</a>
+      <a href="https://github.com/CogxAI/CogxAI" target="_blank">GitHub</a>
+      <a href="https://x.com/cogxai" target="_blank">X</a>
       <a href="/register" style="background: rgba(0,212,255,0.08); color: #00d4ff; padding: 6px 14px; border-radius: 10px; font-weight: 700; font-size: 11px; line-height: 1.7; letter-spacing: 1.5px; border: 1px solid rgba(0,212,255,0.3);">Register</a>
     </div>
   </div>
@@ -924,13 +924,20 @@
             <span class="config-label">Generated Config</span>
             <div class="config-actions">
               <button class="btn btn-outline" onclick="copyConfig()">Copy</button>
-              <button class="btn btn-outline" onclick="downloadConfig()">Download</button>
+              <button class="btn btn-outline" onclick="downloadConfig()">Download <span id="configFileHint" style="font-size:9px;opacity:0.6"></span></button>
             </div>
           </div>
           <div class="config-pre" id="configPre"></div>
         </div>
 
-        <div class="anim-5">
+        <ol class="instructions-list anim-5">
+          <li>Copy the config above</li>
+          <li>Paste it into the config file for your IDE (see below)</li>
+          <li>If the file already exists, merge the <code>"mcpServers"</code> section</li>
+          <li>Restart your IDE</li>
+        </ol>
+
+        <div class="anim-6">
           <button class="collapsible-toggle" onclick="toggleCollapsible(this)">
             <span class="collapsible-chevron">&#9654;</span> Where does this file go?
           </button>
@@ -941,37 +948,12 @@
                 <div class="path-value">~/Library/Application Support/Claude/claude_desktop_config.json</div>
               </li>
               <li>
-                <div class="path-label">Claude Code</div>
+                <div class="path-label">Claude Code (this project)</div>
                 <div class="path-value">.mcp.json in your project folder</div>
               </li>
               <li>
-                <div class="path-label">Cursor</div>
-                <div class="path-value">~/.cursor/mcp.json</div>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <ol class="instructions-list anim-6">
-          <li>Copy the config above</li>
-          <li>Open the config file for your IDE</li>
-          <li>Paste the config (merge if file already exists)</li>
-          <li>Restart your IDE</li>
-        </ol>
-
-        <div class="anim-7">
-          <button class="collapsible-toggle" onclick="toggleCollapsible(this)">
-            <span class="collapsible-chevron">&#9654;</span> Where does this file go?
-          </button>
-          <div class="collapsible-body">
-            <ul class="path-list">
-              <li>
-                <div class="path-label">Claude Desktop</div>
-                <div class="path-value">~/Library/Application Support/Claude/claude_desktop_config.json</div>
-              </li>
-              <li>
-                <div class="path-label">Claude Code</div>
-                <div class="path-value">.mcp.json in your project folder</div>
+                <div class="path-label">Claude Code (all projects)</div>
+                <div class="path-value">~/.claude.json — merge into the existing file</div>
               </li>
               <li>
                 <div class="path-label">Cursor</div>
@@ -1317,8 +1299,13 @@ function copyConfig() {
 }
 
 function downloadConfig() {
-  const config = getConfigJson();
-  downloadBlob(JSON.stringify(config, null, 2), getConfigFileName(), 'application/json');
+  var config = getConfigJson();
+  var fname = getConfigFileName();
+  if (fname.startsWith('.')) {
+    var ok = confirm('Important: Your browser may remove the dot from the filename.\n\nAfter downloading, make sure the file is named:\n' + fname + '\n\nRename it if needed before placing it in the correct folder.');
+    if (!ok) return;
+  }
+  downloadBlob(JSON.stringify(config, null, 2), fname, 'application/json');
 }
 
 // ─── Env File ───────────────────────────────────────

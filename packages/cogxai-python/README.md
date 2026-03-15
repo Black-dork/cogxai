@@ -99,4 +99,4 @@ Or register at [cogxai.org/register](https://cogxai.org/register).
 
 ## License
 
-MIT — [Black-dork](https://cogxai.org)
+MIT — [CogxAI](https://cogxai.org)

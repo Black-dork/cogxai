@@ -210,10 +210,10 @@ clawhub install cogxai-memory
 Or manually:
 ```bash
 curl -o skills/cogxai-memory/SKILL.md \
-  https://raw.githubusercontent.com/Black-dork/cogxai-memory-skill/main/SKILL.md
+  https://raw.githubusercontent.com/CogxAI/CogxAI-memory-skill/main/SKILL.md
 ```
 
-GitHub: [github.com/Black-dork/cogxai-memory-skill](https://github.com/Black-dork/cogxai-memory-skill)
+GitHub: [github.com/CogxAI/CogxAI-memory-skill](https://github.com/CogxAI/CogxAI-memory-skill)
 
 ---
 
@@ -232,7 +232,7 @@ GitHub: [github.com/Black-dork/cogxai-memory-skill](https://github.com/Black-dor
 ## Links
 
 - **Register:** [cogxai.org/register](https://cogxai.org/register)
-- **GitHub:** [github.com/Black-dork/cogxai](https://github.com/Black-dork/cogxai)
+- **GitHub:** [github.com/CogxAI/CogxAI](https://github.com/CogxAI/CogxAI)
 - **npm:** [cogxai](https://www.npmjs.com/package/cogxai)
 - **PyPI:** [cogxai](https://pypi.org/project/cogxai/)
 - **Benchmark:** [cogxai.org/benchmark](https://cogxai.org/benchmark) (83.9/100)

@@ -11,7 +11,7 @@ Thanks for your interest in contributing. This guide covers the basics.
 ## Getting started
 
 ```bash
-git clone https://github.com/Black-dork/cogxai.git
+git clone https://github.com/CogxAI/CogxAI.git
 cd cogxai
 npm install
 cp .env.example .env  # Fill in your API keys
@@ -59,7 +59,7 @@ The project doesn't have a test suite yet. If you'd like to add one, that's a gr
 
 ## Good first issues
 
-Look for issues labeled [`good first issue`](https://github.com/Black-dork/cogxai/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) for beginner-friendly tasks.
+Look for issues labeled [`good first issue`](https://github.com/CogxAI/CogxAI/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) for beginner-friendly tasks.
 
 ## Questions?
 

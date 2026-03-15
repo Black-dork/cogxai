@@ -658,7 +658,7 @@ INFERENCE_FALLBACK=anthropic       # Fall back to Claude if needed
 ## Running CogxAI
 
 ```bash
-git clone https://github.com/Black-dork/cogxai.git
+git clone https://github.com/CogxAI/CogxAI.git
 cd cogxai
 npm install
 cp .env.example .env  # fill in API keys

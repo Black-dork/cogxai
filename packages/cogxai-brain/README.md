@@ -98,4 +98,4 @@ Memories are ranked by a weighted combination of:
 
 ## License
 
-MIT — [Black-dork](https://cogxai.org)
+MIT — [CogxAI](https://cogxai.org)

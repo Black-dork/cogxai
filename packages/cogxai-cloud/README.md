@@ -45,4 +45,4 @@ Sync memories between local and cloud storage. Push/pull with conflict resolutio
 
 ## License
 
-MIT — [Black-dork](https://cogxai.org)
+MIT — [CogxAI](https://cogxai.org)

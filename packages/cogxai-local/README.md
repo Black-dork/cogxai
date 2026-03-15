@@ -49,4 +49,4 @@ Local ONNX runtime using `Xenova/gte-small` (384 dimensions). Downloads ~30MB mo
 
 ## License
 
-MIT — [Black-dork](https://cogxai.org)
+MIT — [CogxAI](https://cogxai.org)
